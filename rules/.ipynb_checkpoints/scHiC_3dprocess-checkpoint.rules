@@ -1,0 +1,112 @@
+rule hickit_3d:
+    input:
+        impute_pairs = "processed/{sample}/2d_info/impute.pairs.gz",
+        hickit = config["softwares"]["HICKIT"],
+    output:
+        tdg_1m = "processed/{sample}/3d_info/1m.{rep}.3dg",
+        tdg_200k = "processed/{sample}/3d_info/200k.{rep}.3dg",
+        tdg_50k = "processed/{sample}/3d_info/50k.{rep}.3dg",
+    resources:
+        nodes = 1
+    shell: """
+        set +u
+        source ~/miniconda3/etc/profile.d/conda.sh
+        conda activate py3
+        set -u
+        {input.hickit}/hickit -s{wildcards.rep} -M \
+            -i {input.impute_pairs} -Sr1m -c1 -r10m -c2 \
+            -b4m -b1m -O {output.tdg_1m} \
+            -b200k -O {output.tdg_200k} \
+            -D5 -b50k -O {output.tdg_50k}
+        set +u
+        conda deactivate
+        set -u
+        """
+
+rule hickit_clean3D:
+    input:
+        contacts_cons = rules.pairs2cons.output.contacts_cons,
+        impute_cons = rules.pairs2cons.output.impute_cons,
+        tdg_50k = rules.hickit_3d.output.tdg_50k,
+        dip_c = config["softwares"]["DIP_C"],
+        hickit_3dg_to_3dg_rescale_unit = config["softwares"]["HICKIT_3DG_TO_3DG_RESCALE_UNIT"],
+    output:
+        tdg_50k_clean = "processed/{sample}/3d_info/clean.50k.{rep}.3dg"
+    resources:
+        nodes = 1
+    shell: """
+        set +u
+        source ~/miniconda3/etc/profile.d/conda.sh
+        conda activate dipc
+        set -u
+
+        {input.hickit_3dg_to_3dg_rescale_unit} {input.tdg_50k}
+        {input.dip_c} clean3 -c {input.impute_cons} processed/{wildcards.sample}/3d_info/50k.{wildcards.rep}.dip-c.3dg > {output.tdg_50k_clean}
+        
+        set +u
+        conda deactivate
+        set -u
+        """
+
+rule hickit_align3D:
+    input:
+        hires = config["softwares"]["HIRES"],
+        tdg_50k_clean = expand("processed/{sample}/3d_info/clean.50k.{rep}.3dg",sample=SAMPLES,rep=list(range(5)))
+    output:
+        rmsInfo = "processed/{sample}/3d_info/50k.align.rms.info",
+    resources:
+        nodes = 1
+    shell:"""
+        set +u
+        source ~/miniconda3/etc/profile.d/conda.sh
+        conda activate hic
+        set -u
+        
+        python /share/home/zliu/scripts/smkScripts/HiRES/hires3dAligner.py processed/{wildcards.sample}/3d_info/clean.50k.[0-4].3dg 2> {output.rmsInfo} > /dev/null
+        
+        set +u
+        conda deactivate
+        set -u
+        """
+
+rule generate_cpg_CIF:
+    input:
+        rmsInfo = rules.hickit_align3D.output.rmsInfo,
+    output:
+        cif="result/cif_cpg/{sample}.cif"
+    shell:"""
+        set +u; source activate; conda activate dipc; set -u
+
+        exampleTdg=`cat {input.rmsInfo} | grep Example | sed -e "s/Example Structure presented: //g"`
+        ~/biosoft/dip-c/dip-c color -c ~/share/Data/public/ref_genome/GRCm38/raw_data/mm10.cpg.50k.txt $exampleTdg | dip-c vis -M -c /dev/stdin $exampleTdg > {output.cif}
+        
+        set +u; conda deactivate; set -u
+        """
+
+rule generate_chrom_CIF:
+    input:
+        rmsInfo = rules.hickit_align3D.output.rmsInfo,
+    output:
+        cif="result/cif_chrom/{sample}.cif"
+    shell:"""
+        set +u; source activate; conda activate dipc; set -u
+
+        exampleTdg=`cat {input.rmsInfo} | grep Example | sed -e "s/Example Structure presented: //g"`
+        ~/biosoft/dip-c/dip-c color -n /share/home/zliu/share/Data/public/ref_genome/mouse_ref/M23/raw_data/chr.len $exampleTdg | dip-c vis -c /dev/stdin $exampleTdg > {output.cif}
+        
+        set +u; conda deactivate; set -u
+        """
+
+rule generate_cen_CIF:
+    input:
+        rmsInfo = rules.hickit_align3D.output.rmsInfo,
+    output:
+        cif="result/cif_cen/{sample}.cif"
+    shell:"""
+        set +u; source activate; conda activate dipc; set -u
+
+        exampleTdg=`cat {input.rmsInfo} | grep Example | sed -e "s/Example Structure presented: //g"`
+        ~/biosoft/dip-c/dip-c color -L ~/biosoft/dip-c/color/mm10.chr.cen $exampleTdg | dip-c vis -c /dev/stdin $exampleTdg > {output.cif}
+        
+        set +u; conda deactivate; set -u
+        """

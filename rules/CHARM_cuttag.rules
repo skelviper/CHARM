@@ -1,0 +1,118 @@
+rule R2_mapping:
+    input:
+        ref_genome=config["refs"][config["ref_genome"]]["bwa_mem2_index"],
+        R2 = rules.cutTagSplit.output.ct_R2
+    output:
+        R2sortbam = "processed/{sample}/cuttag/{sample}.R2.sort.bam"
+    threads:  config["resources"]["bwa_cpu_threads"],
+    shell:"""
+        set +u;source activate;conda activate py3;set -u
+
+        bwa-mem2 mem -5SP -t {threads} {input.ref_genome} {input.R2} | samtools sort -@{threads} -o {output.R2sortbam} -
+
+        set +u;conda deactivate;set -u
+    """
+
+#picard queryname sort/dedup
+rule picard_sort_rmdup:
+    input:
+        R2sortbam = rules.R2_mapping.output.R2sortbam,
+    output:
+        re_sort = temp("processed/{sample}/cuttag/{sample}.R2.querysort.bam"),
+        rmdup_bam = "processed/{sample}/cuttag/{sample}.R2.rmdup.bam",
+        rmdup_mat = "processed/{sample}/cuttag/{sample}.R2.rmdup.mat",
+
+    shell:"""
+        set +u;source activate;conda activate py3;set -u
+
+        picard SortSam INPUT={input.R2sortbam} OUTPUT={output.re_sort} SORT_ORDER=queryname
+        picard MarkDuplicates -I {output.re_sort} -O {output.rmdup_bam} -M {output.rmdup_mat} --REMOVE_DUPLICATES true
+
+        set +u;conda deactivate;set -u
+    """
+
+rule bam2bed:
+    input:
+        rmdup_bam = rules.picard_sort_rmdup.output.rmdup_bam,
+    output:
+        R2_dedup_bed = "processed/{sample}/cuttag/{sample}.R2_5.bed.gz"
+    shell:"""
+        set +u;source activate;conda activate py3;set -u
+
+        bedtools bamtobed -i {input.rmdup_bam} | gzip > {output.R2_dedup_bed}
+
+        set +u;conda deactivate;set -u
+    """
+
+rule fastq2tabfastq:
+    input:
+        R1 = rules.cutTagSplit.output.ct_R1,
+        R2 = rules.cutTagSplit.output.ct_R2,
+    output:
+        R1_out = temp("processed/{sample}/tabfastq/{sample}.R1.tabfastq.gz"),
+        R2_out = temp("processed/{sample}/tabfastq/{sample}.R2.tabfastq.gz"),
+    shell:"""
+        set +u;source activate;conda activate py3;set -u
+
+        seqkit fx2tab {input.R1} | gzip > {output.R1_out}
+        seqkit fx2tab {input.R2} | gzip > {output.R2_out}
+
+        set +u;conda deactivate;set -u
+    """
+
+# use custom R script dedup with R2
+rule extract_fastq:
+    input:
+        R2_dedup_bed = rules.bam2bed.output.R2_dedup_bed,
+        R1 = rules.fastq2tabfastq.output.R1_out,
+        R2 = rules.fastq2tabfastq.output.R2_out,
+    output:
+        R1out_tabfastq = temp("processed/{sample}/tabfastq/{sample}.R1.dedup.tabfastq.gz"),
+        R2out_tabfastq = temp("processed/{sample}/tabfastq/{sample}.R2.dedup.tabfastq.gz"),
+    params:
+        max_sep_distance = 20,
+        min_mapping_qual = 30,
+    shell:"""
+        set +u;source activate;conda activate R4;set -u
+
+        Rscript ./CHARM/CHARM_scripts/CTHiRES.extract_dedup_reads.R {params.max_sep_distance} {params.min_mapping_qual} \
+                            {input.R2_dedup_bed} {input.R1} {input.R2} {output.R1out_tabfastq} {output.R2out_tabfastq}
+
+        set +u;conda deactivate;set -u
+    """
+
+rule tabfastq2fastq:
+    input:
+        R1tab = rules.extract_fastq.output.R1out_tabfastq,
+        R2tab = rules.extract_fastq.output.R2out_tabfastq,
+    output:
+        R1 = "processed/{sample}/cuttag/{sample}.dedup.R1.fq.gz",
+        R2 = "processed/{sample}/cuttag/{sample}.dedup.R2.fq.gz",
+    shell:"""
+        set +u;source activate;conda activate py3;set -u
+
+        seqkit tab2fx {input.R1tab} | gzip > {output.R1}
+        seqkit tab2fx {input.R2tab} | gzip > {output.R2}
+
+        set +u;conda deactivate;set -u
+    """
+rule pair_end_mapping:
+    input:
+        R1dedup = rules.tabfastq2fastq.output.R1,
+        R2dedup = rules.tabfastq2fastq.output.R2,
+    output:
+        sortbam = "processed/cuttag_all/{sample}.pairend.sort.bam"
+    threads:  config["resources"]["bwa_cpu_threads"],
+    resources:
+        nodes =  config["resources"]["bwa_cpu_threads"],
+    shell:"""
+        set +u
+        source ~/miniconda3/etc/profile.d/conda.sh
+        conda activate py3
+        set -u
+        bwa-mem2 mem -5SP -t {threads} {BWA_REF_GENOME} {input.R1dedup} {input.R2dedup} | samtools sort -@{threads} -o {output.sortbam} -
+        samtools index {output.sortbam}
+        set +u
+        conda deactivate
+        set -u
+        """

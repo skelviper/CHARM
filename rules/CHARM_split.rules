@@ -1,0 +1,87 @@
+rule cutTagSplit:
+    input:
+        "Rawdata/{sample}/{sample}_R1.fq.gz",
+        "Rawdata/{sample}/{sample}_R2.fq.gz",
+        #"Rawdata/{sample}_R1.fastq.gz",
+        #"Rawdata/{sample}_R2.fastq.gz",
+    output: 
+        HiRES_R1="processed/{sample}/HiRES/{sample}.HiRES.R1.fq.gz",
+        HiRES_R2="processed/{sample}/HiRES/{sample}.HiRES.R2.fq.gz",
+        ct_R1="processed/{sample}/cuttag/{sample}.cuttag.R1.fq.gz",
+        ct_R2="processed/{sample}/cuttag/{sample}.cuttag.R2.fq.gz"
+        
+    threads: config["resources"]["cutadapt_cpu_threads"]
+    resources:
+        nodes = config["resources"]["cutadapt_cpu_threads"]
+    params:
+        adapter=r"XGGTTGAGGTAGTGGTATAGCTTCGTGTATAAGAGACAG;o=32"
+    shell:"""
+        set +u
+        source ~/miniconda3/etc/profile.d/conda.sh
+        conda activate py3
+        set -u
+        cutadapt -G '{params.adapter}' -j {threads} --untrimmed-output {output.HiRES_R1} --untrimmed-paired-output {output.HiRES_R2} -o {output.ct_R1} -p {output.ct_R2} {input} 
+        cat {output.ct_R1} >> {output.HiRES_R1}
+        cat {output.ct_R2} >> {output.HiRES_R2}
+        
+        set +u
+        conda deactivate
+        set -u
+        """
+
+rule split:
+    input:
+        [rules.cutTagSplit.output.ct_R1,rules.cutTagSplit.output.ct_R2] if config["if_cuttag"] else ["Rawdata/{sample}/{sample}_R1.fq.gz","Rawdata/{sample}/{sample}_R2.fq.gz",]
+
+        #"Rawdata/{sample}_R1.fastq.gz",
+        #"Rawdata/{sample}_R2.fastq.gz"
+    output: 
+        DNA_R1="processed/{sample}/DNA/{sample}.dna.R1.fq.gz",
+        DNA_R2="processed/{sample}/DNA/{sample}.dna.R2.fq.gz",
+        RNA_R1="processed/{sample}/RNA/{sample}.rna.R1.fq.gz",
+        RNA_R2="processed/{sample}/RNA/{sample}.rna.R2.fq.gz"
+        
+    threads: config["resources"]["cutadapt_cpu_threads"]
+    resources:
+        nodes = config["resources"]["cutadapt_cpu_threads"]
+    params:
+        adapter=r"XGGTTGAGGTAGTATTGCGCAATG;o=20"
+    shell:"""
+        set +u
+        source ~/miniconda3/etc/profile.d/conda.sh
+        conda activate py3
+        set -u
+
+        cutadapt -G '{params.adapter}' -j {threads} --untrimmed-output {output.DNA_R1} --untrimmed-paired-output {output.DNA_R2} -o {output.RNA_R1} -p {output.RNA_R2} {input} 
+        
+        set +u
+        conda deactivate
+        set -u
+        """
+
+#cutRound2 is for minimize genome contamination in RNA data, probably from exonuclease activity of reverse transcriptase
+rule cutRound2:
+    input:
+        RNA_R1="processed/{sample}/RNA/{sample}.rna.R1.fq.gz",
+        RNA_R2="processed/{sample}/RNA/{sample}.rna.R2.fq.gz"
+    output: 
+        RNA_R1="processed/{sample}/RNA/{sample}.rna.clean.R1.fq.gz",
+        RNA_R2="processed/{sample}/RNA/{sample}.rna.clean.R2.fq.gz"
+        
+    threads: config["resources"]["cutadapt_cpu_threads"]
+    resources:
+        nodes = config["resources"]["cutadapt_cpu_threads"]  
+    params:
+        adapter=r"XNNNNNNNNTTTTTTTTTTTTTTT;o=18"
+    shell:"""
+        set +u
+        source ~/miniconda3/etc/profile.d/conda.sh
+        conda activate py3
+        set -u
+
+        cutadapt --action=none --discard-untrimmed -G '{params.adapter}' -j {threads} -o {output.RNA_R1} -p {output.RNA_R2} {input}
+
+        set +u
+        conda deactivate
+        set -u
+        """

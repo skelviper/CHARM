@@ -1,0 +1,54 @@
+####################################
+#       CHARM_pipline              #
+#@author Z Liu                     #
+#@Ver 0.0.1                        #
+#@date 2021/7/12                   #
+####################################
+
+#############CONFIG#################
+
+import os
+
+#input
+#SAMPLES = [i.split(sep='_')[0] for i in os.listdir("./Rawdata")]
+SAMPLES = os.listdir("./Rawdata")
+#SAMPLES = ["E752001"]
+
+configfile: "CHARM/config.yaml"
+
+#############RULE_ALL###############
+"""
+decide what you need for your down stream analysis.
+"""
+rule all:
+    input:
+        #preliminary split
+        expand("processed/RNA_all/umibycell.{sample}.rna.R1.fq",sample=SAMPLES),
+        #RNA part
+        expand("result/RNA_Res/counts.{type}.{genome}.tsv",type=["gene","exon"],genome=["total","genome1","genome2"] if config["if_RNA_snp_split"] else ["total"]),
+
+        #Hi-C part pairs info
+        expand("result/cleaned_pairs/c12/{sample}.pairs.gz",sample=SAMPLES),
+
+        #Hi-C part 3d info
+        expand("processed/{sample}/3d_info/50k.align.rms.info", sample=SAMPLES if config["if_structure"] else []),
+        expand("processed/{sample}/3d_info/50k.{rep}.3dg", sample=SAMPLES if config["if_structure"] else [],rep=list(range(5)) if config["if_structure"] else []),
+        #expand("result/cif/{sample}.cif",sample=SAMPLES if config["if_structure"] else []),
+
+        #cuttag part
+        expand("processed/cuttag_all/{sample}.pairend.sort.bam", sample=SAMPLES if config["if_cuttag"] else [])
+    shell:"""
+        ./HiRESworkflow/hires_scripts/generateStat.sh
+    """
+
+    
+############END_rule_all############
+
+
+include: "rules/CHARM_split.rules"
+include: "rules/CHARM_cuttag.rules"
+include: "rules/scHiC_2dprocess.rules"
+include: "rules/scHiC_3dprocess.rules"
+include: "rules/CHARM_RNA.rules"
+
+
