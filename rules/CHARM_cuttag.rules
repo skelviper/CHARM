@@ -100,6 +100,7 @@ rule pair_end_mapping:
     input:
         R1dedup = rules.tabfastq2fastq.output.R1,
         R2dedup = rules.tabfastq2fastq.output.R2,
+        ref_genome=config["refs"][config["ref_genome"]]["bwa_mem2_index"],
     output:
         sortbam = "processed/cuttag_all/{sample}.pairend.sort.bam"
     threads:  config["resources"]["bwa_cpu_threads"],
@@ -110,7 +111,7 @@ rule pair_end_mapping:
         source ~/miniconda3/etc/profile.d/conda.sh
         conda activate py3
         set -u
-        bwa-mem2 mem -5SP -t {threads} {BWA_REF_GENOME} {input.R1dedup} {input.R2dedup} | samtools sort -@{threads} -o {output.sortbam} -
+        bwa-mem2 mem -5SP -t {threads} {input.ref_genome} {input.R1dedup} {input.R2dedup} | samtools sort -@{threads} -o {output.sortbam} -
         samtools index {output.sortbam}
         set +u
         conda deactivate
