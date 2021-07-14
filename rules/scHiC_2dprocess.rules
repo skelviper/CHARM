@@ -142,25 +142,29 @@ rule hickit_2d:
         set -u
         """
 
-rule pairs2cons:
+rule sep_for_clean:
     input:
         #software
-        hickit_pairs_to_con = config["softwares"]["HICKIT_PAIRS_TO_CON"],
-        hickit_impute_pairs_to_con = config["softwares"]["HICKIT_IMPUTE_PAIRS_TO_CON"],
+        hires = config["softwares"]["HIRES"],
         #file
-        contacts_pairs = rules.hickit_2d.input.cleaned_pairs,
-        impute_pairs = rules.hickit_2d.output.impute_pairs
-    resources:
-        nodes = 1
+        impute_pairs = rules.hickit_2d.output.impute_pairs,
     output:
-        contacts_cons = "processed/{sample}/2d_info/contacts.con.gz",
-        impute_cons = "processed/{sample}/2d_info/impute.con.gz"
+        dip_pairs = "processed/{sample}/2d_info/{sample}.dip.pairs.gz",
+        hickit_pairs = "processed/{sample}/2d_info/{sample}.hickit.pairs.gz",
+    threads: 4
+    resources:
+        nodes = 4
+    output:
+
     shell:"""
-        #convert from hickit to dip-c formats
-
-        {input.hickit_pairs_to_con} {input.contacts_pairs} {output.contacts_cons}
-        {input.hickit_impute_pairs_to_con} {input.impute_pairs} {output.impute_cons}
-
-        """
+        set +u
+        source ~/miniconda3/etc/profile.d/conda.sh
+        conda activate py3
+        set -u
+        python {input.hires}/hires.py sep_clean -n {threads} -o1 {output.dip_pairs} -o2 {output.hickit_pairs} {input.impute_pairs}
+        set +u
+        conda deactivate
+        set -u
+    """
 
 

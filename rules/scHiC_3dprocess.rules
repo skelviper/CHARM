@@ -25,11 +25,9 @@ rule hickit_3d:
 
 rule hickit_clean3D:
     input:
-        contacts_cons = rules.pairs2cons.output.contacts_cons,
-        impute_cons = rules.pairs2cons.output.impute_cons,
         tdg_50k = rules.hickit_3d.output.tdg_50k,
-        dip_c = config["softwares"]["DIP_C"],
-        hickit_3dg_to_3dg_rescale_unit = config["softwares"]["HICKIT_3DG_TO_3DG_RESCALE_UNIT"],
+        dip_pairs = rules.sep_for_clean.output.dip_pairs,
+        hires = config["softwares"]["HIRES"],
     output:
         tdg_50k_clean = "processed/{sample}/3d_info/clean.50k.{rep}.3dg"
     resources:
@@ -37,11 +35,10 @@ rule hickit_clean3D:
     shell: """
         set +u
         source ~/miniconda3/etc/profile.d/conda.sh
-        conda activate dipc
+        conda activate py3
         set -u
 
-        {input.hickit_3dg_to_3dg_rescale_unit} {input.tdg_50k}
-        {input.dip_c} clean3 -c {input.impute_cons} processed/{wildcards.sample}/3d_info/50k.{wildcards.rep}.dip-c.3dg > {output.tdg_50k_clean}
+        python {input.hires}/hires.py clean3 -r {input.dip_pairs} -i processed/{wildcards.sample}/3d_info/50k.{wildcards.rep}.3dg -o {output.tdg_50k_clean}
         
         set +u
         conda deactivate
