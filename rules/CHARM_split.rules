@@ -1,9 +1,9 @@
 rule cutTagSplit:
     input:
-        "Rawdata/{sample}/{sample}_R1.fq.gz",
-        "Rawdata/{sample}/{sample}_R2.fq.gz",
-        #"Rawdata/{sample}_R1.fastq.gz",
-        #"Rawdata/{sample}_R2.fastq.gz",
+        #"Rawdata/{sample}/{sample}_R1.fq.gz",
+        #"Rawdata/{sample}/{sample}_R2.fq.gz",
+        "Rawdata/{sample}_R1.fastq.gz",
+        "Rawdata/{sample}_R2.fastq.gz",
     output: 
         HiRES_R1="processed/{sample}/HiRES/{sample}.HiRES.R1.fq.gz",
         HiRES_R2="processed/{sample}/HiRES/{sample}.HiRES.R2.fq.gz",
@@ -31,10 +31,9 @@ rule cutTagSplit:
 
 rule split:
     input:
-        [rules.cutTagSplit.output.ct_R1,rules.cutTagSplit.output.ct_R2] if config["if_cuttag"] else ["Rawdata/{sample}/{sample}_R1.fq.gz","Rawdata/{sample}/{sample}_R2.fq.gz",]
-
-        #"Rawdata/{sample}_R1.fastq.gz",
-        #"Rawdata/{sample}_R2.fastq.gz"
+        #[rules.cutTagSplit.output.ct_R1,rules.cutTagSplit.output.ct_R2] if config["if_cuttag"] else ["Rawdata/{sample}/{sample}_R1.fq.gz","Rawdata/{sample}/{sample}_R2.fq.gz",]
+        "Rawdata/{sample}_R1.fastq.gz",
+        "Rawdata/{sample}_R2.fastq.gz",
     output: 
         DNA_R1="processed/{sample}/DNA/{sample}.dna.R1.fq.gz",
         DNA_R2="processed/{sample}/DNA/{sample}.dna.R2.fq.gz",

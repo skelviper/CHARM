@@ -10,8 +10,8 @@
 import os
 
 #input
-#SAMPLES = [i.split(sep='_')[0] for i in os.listdir("./Rawdata")]
-SAMPLES = os.listdir("./Rawdata")
+SAMPLES = [i.split(sep='_')[0] for i in os.listdir("./Rawdata")]
+#SAMPLES = os.listdir("./Rawdata")
 #SAMPLES = ["E752001"]
 
 configfile: "CHARM/config.yaml"
@@ -38,7 +38,7 @@ rule all:
         #cuttag part
         expand("processed/cuttag_all/{sample}.pairend.sort.bam", sample=SAMPLES if config["if_cuttag"] else [])
     shell:"""
-        ./HiRESworkflow/hires_scripts/generateStat.sh
+        ./CHARM/CHARM_scripts/generateStat.sh
     """
 
     
