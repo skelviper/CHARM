@@ -34,5 +34,5 @@ readid <- R2bed_cluster %>% filter(mapping_qual >= min_mapping_qual) %>% group_b
 R1.tabfastq <- read_table2(R1.tabfastq_path,col_names = c("readid","index","seq","qual")) %>% right_join(readid) %>% select(-index)
 R2.tabfastq <- read_table2(R2.tabfastq_path,col_names = c("readid","index","seq","qual")) %>% right_join(readid) %>% select(-index)
 
-R1.tabfastq %>% write_tsv(R1.dedup.tabfastq_path,col_names = F)
-R2.tabfastq %>% write_tsv(R2.dedup.tabfastq_path,col_names = F)
+R1.tabfastq %>% arrange(readid) %>% write_tsv(R1.dedup.tabfastq_path,col_names = F)
+R2.tabfastq %>% arrange(readid) %>% write_tsv(R2.dedup.tabfastq_path,col_names = F)

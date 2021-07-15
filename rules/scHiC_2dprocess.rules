@@ -53,10 +53,10 @@ rule align2pairs:
 
         if [ $yperx \> {params.yperx_threshold} ]
         then
-        cat <(samtools view -H {input.bam}) <(samtools view {input.bam} | sort -k1 --buffer-size={resources.mem_mb}m --parallel=10) | {input.hickit}/hickit.js sam2seg  -v {input.snp_file} - 2> {log.contacts_seg_log} |\
+        samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg  -v {input.snp_file} - 2> {log.contacts_seg_log} |\
          {input.hickit}/hickit.js chronly - | {input.hickit}/hickit.js bedflt {input.par_file} - | sed 's/-/+/g' | gzip > {output.contacts_seg}
         else
-        cat <(samtools view -H {input.bam}) <(samtools view {input.bam} | sort -k1 --buffer-size={resources.mem_mb}m --parallel=10) | {input.hickit}/hickit.js sam2seg -v {input.snp_file} - 2> {log.contacts_seg_log} | {input.hickit}/hickit.js chronly -y - | sed 's/-/+/g' | gzip > {output.contacts_seg}
+        samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg -v {input.snp_file} - 2> {log.contacts_seg_log} | {input.hickit}/hickit.js chronly -y - | sed 's/-/+/g' | gzip > {output.contacts_seg}
         fi
         set +u
         conda deactivate
