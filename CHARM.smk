@@ -1,8 +1,8 @@
 ####################################
 #       CHARM_pipline              #
 #@author Z Liu                     #
-#@Ver 0.0.1                        #
-#@date 2021/7/12                   #
+#@Ver 0.1.0                        #
+#@date 2021/7/16                   #
 ####################################
 
 #############CONFIG#################
@@ -37,6 +37,7 @@ rule all:
 
         #cuttag part
         expand("processed/cuttag_all/{sample}.pairend.sort.bam", sample=SAMPLES if config["if_cuttag"] else [])
+    threads: config["resources"]["generateStat_cpu_threads"] 
     shell:"""
         ./CHARM/CHARM_scripts/generateStat.sh
     """

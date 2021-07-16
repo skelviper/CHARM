@@ -1,9 +1,9 @@
 if_snp: True
-if_structure: False
+if_structure: True
 if_RNA_snp_split: True
-if_cuttag: True
+if_cuttag: False
 
-ref_genome: GRCh37d5 # GRCm38 or GRCh37d5
+ref_genome: GRCm38 # GRCm38 or GRCh37d5
 yperx_threshold: 0.12
 softwares:
   HIRES: /share/home/zliu/biosoft/hires-utils/
@@ -36,3 +36,4 @@ resources:
   star_cpu_threads: 20
   align2pairs_cpu_threads: 10
   count_cpu_threads: 6
+  generateStat_cpu_threads: 40
