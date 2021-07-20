@@ -153,8 +153,8 @@ rule convertCountFormat:
     output:
         convertedCountMatrix = "result/RNA_Res/counts.{type}.{genome}.format.tsv",
     shell:"""
-        set +u; source activate;set -u
+        set +u; source activate; conda activate R4;set -u
         
-        Rscript CHARM/CHARM_scripts/fraction.R {input.countMatirx} {output.convertedCountMatrix}
+        Rscript CHARM/CHARM_scripts/fraction.R {input.countMatrix} {output.convertedCountMatrix}
         set +u; conda deactivate; set -u
     """
