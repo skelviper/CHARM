@@ -146,3 +146,15 @@ rule count:
         conda deactivate
         set -u
         """
+
+rule convertCountFormat:
+    input:
+        countMatrix = rules.count.output.CountMatrix,
+    output:
+        convertedCountMatrix = "result/RNA_Res/counts.{type}.{genome}.format.tsv",
+    shell:"""
+        set +u; source activate;set -u
+        
+        Rscript CHARM/CHARM_scripts/fraction.R {input.countMatirx} {output.convertedCountMatrix}
+        set +u; conda deactivate; set -u
+    """

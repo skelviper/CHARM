@@ -4,7 +4,7 @@ if_RNA_snp_split: True
 if_cuttag: False
 
 ref_genome: GRCm38 # GRCm38 or GRCh37d5
-yperx_threshold: 0.12
+yperx_threshold: 0.015
 softwares:
   HIRES: /share/home/zliu/biosoft/hires-utils/
   HICKIT: /share/home/zliu/biosoft/hickit-0.1.1_x64-linux/

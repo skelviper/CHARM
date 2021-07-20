@@ -26,7 +26,7 @@ rule all:
         expand("processed/RNA_all/umibycell.{sample}.rna.R1.fq",sample=SAMPLES),
         #RNA part
         expand("result/RNA_Res/counts.{type}.{genome}.tsv",type=["gene","exon"],genome=["total","genome1","genome2"] if config["if_RNA_snp_split"] else ["total"]),
-
+        expand("result/RNA_Res/counts.{type}.{genome}.format.tsv",type=["gene","exon"],genome=["total","genome1","genome2"] if config["if_RNA_snp_split"] else ["total"]),
         #Hi-C part pairs info
         expand("result/cleaned_pairs/c12/{sample}.pairs.gz",sample=SAMPLES),
 

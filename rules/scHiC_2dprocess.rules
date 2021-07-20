@@ -48,7 +48,7 @@ rule align2pairs:
         conda activate py3
         set -u
         # decide sex
-        yperx=`awk 'BEGIN{{printf "%.2f",('$(samtools view -q30 {input.bam} chrY |wc -l)'/'$(samtools view -q30 {input.bam} chrX | wc -l)')}}'`
+        yperx=`awk 'BEGIN{{printf "%.6f",('$(samtools view -q30 {input.bam} chrY |wc -l)'/'$(samtools view -q30 {input.bam} chrX | wc -l)')}}'`
         echo $yperx > {log.yperx} 
 
         if [ $yperx \> {params.yperx_threshold} ]
