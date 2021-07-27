@@ -48,15 +48,15 @@ rule align2pairs:
         conda activate py3
         set -u
         # decide sex
-        yperx=`awk 'BEGIN{{printf "%.2f",('$(samtools view {input.bam} chrY |wc -l)'/'$(samtools view {input.bam} chrX | wc -l)')}}'`
+        yperx=`awk 'BEGIN{{printf "%.5f",('$(samtools view -q 30 {input.bam} chrY |wc -l)'/'$(samtools view -q 30 {input.bam} chrX | wc -l)')}}'`
         echo $yperx > {log.yperx} 
 
         if [ $yperx \> {params.yperx_threshold} ]
         then
-        cat <(samtools view -H {input.bam}) <(samtools view {input.bam} | sort -k1 --buffer-size={resources.mem_mb}m --parallel=10) | {input.hickit}/hickit.js sam2seg  -v {input.snp_file} - 2> {log.contacts_seg_log} |\
+        samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg  -v {input.snp_file} - 2> {log.contacts_seg_log} |\
          {input.hickit}/hickit.js chronly - | {input.hickit}/hickit.js bedflt {input.par_file} - | sed 's/-/+/g' | gzip > {output.contacts_seg}
         else
-        cat <(samtools view -H {input.bam}) <(samtools view {input.bam} | sort -k1 --buffer-size={resources.mem_mb}m --parallel=10) | {input.hickit}/hickit.js sam2seg -v {input.snp_file} - 2> {log.contacts_seg_log} | {input.hickit}/hickit.js chronly -y - | sed 's/-/+/g' | gzip > {output.contacts_seg}
+        samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg -v {input.snp_file} - 2> {log.contacts_seg_log} | {input.hickit}/hickit.js chronly -y - | sed 's/-/+/g' | gzip > {output.contacts_seg}
         fi
         set +u
         conda deactivate
@@ -89,7 +89,7 @@ rule seg2pairs:
         set -u
     """
 
-#clean pairs, new feature in hires
+#clean premiscus legs and isolatied contacts
 rule cleanPairs:
     input: 
         hires = config["softwares"]["HIRES"],
@@ -106,8 +106,8 @@ rule cleanPairs:
         source ~/miniconda3/etc/profile.d/conda.sh
         conda activate py3
         set -u
-        python {input.hires}/hires.py clean_leg -t {threads} {input.contacts_pairs} -o {output.clean1_pairs}
-        python {input.hires}/hires.py clean_isolated -t {threads} -o {output.clean12_pairs} {output.clean1_pairs} 
+        python {input.hires} clean_leg -t {threads} {input.contacts_pairs} -o {output.clean1_pairs}
+        python {input.hires} clean_isolated -t {threads} -o {output.clean12_pairs} {output.clean1_pairs} 
         set +u
         conda deactivate
         set -u
@@ -119,11 +119,11 @@ rule hickit_2d:
         hickit = config["softwares"]["HICKIT"],
         cleaned_pairs = rules.cleanPairs.output.clean12_pairs,
     output:
-        impute_pairs = "processed/{sample}/2d_info/impute.pairs.gz",
-        impute_val = "processed/{sample}/2d_info/impute.val",
+        impute_pairs = "result/impute/pairs/{sample}.impute.pairs.gz",
+        impute_val = "result/impute/val/{sample}.impute.val",
     log:
-        impute_pairs_log = "processed/{sample}/2d_info/impute.pairs.log",
-        impute_val_log = "processed/{sample}/2d_info/impute.val.log",
+        impute_pairs_log = "processed/{sample}/2d_info/{sample}.impute.pairs.log",
+        impute_val_log = "processed/{sample}/2d_info/{sample}.impute.val.log",
     resources:
         nodes = 1
     shell:"""
@@ -142,25 +142,29 @@ rule hickit_2d:
         set -u
         """
 
-rule pairs2cons:
+rule sep_for_clean:
     input:
         #software
-        hickit_pairs_to_con = config["softwares"]["HICKIT_PAIRS_TO_CON"],
-        hickit_impute_pairs_to_con = config["softwares"]["HICKIT_IMPUTE_PAIRS_TO_CON"],
+        hires = config["softwares"]["HIRES"],
         #file
-        contacts_pairs = rules.hickit_2d.input.cleaned_pairs,
-        impute_pairs = rules.hickit_2d.output.impute_pairs
-    resources:
-        nodes = 1
+        impute_pairs = rules.hickit_2d.output.impute_pairs,
     output:
-        contacts_cons = "processed/{sample}/2d_info/contacts.con.gz",
-        impute_cons = "processed/{sample}/2d_info/impute.con.gz"
+        dip_pairs = "result/dip_pairs/{sample}.dip.pairs.gz",
+        hickit_pairs = "processed/{sample}/2d_info/{sample}.hickit.pairs.gz",
+    threads: 4
+    resources:
+        nodes = 4
+    output:
+
     shell:"""
-        #convert from hickit to dip-c formats
-
-        {input.hickit_pairs_to_con} {input.contacts_pairs} {output.contacts_cons}
-        {input.hickit_impute_pairs_to_con} {input.impute_pairs} {output.impute_cons}
-
-        """
+        set +u
+        source ~/miniconda3/etc/profile.d/conda.sh
+        conda activate py3
+        set -u
+        python {input.hires} sep_clean -n {threads} -o1 {output.dip_pairs} -o2 {output.hickit_pairs} {input.impute_pairs}
+        set +u
+        conda deactivate
+        set -u
+    """
 
 
