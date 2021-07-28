@@ -35,9 +35,9 @@ rule all:
         expand("processed/{sample}/3d_info/{res}.{rep}.3dg", sample=SAMPLES if config["if_structure"] else [],
             res=["20k","50k","200k","1m"] if config["if_structure"] else [],
             rep=list(range(5)) if config["if_structure"] else []),
-        #expand("result/cif_cpg/{sample}.{res}.{rep}.cpg.cif", sample=SAMPLES if config["if_structure"] else [],
-         #   res=["20k","50k","200k","1m"] if config["if_structure"] else [],
-         #   rep=list(range(5)) if config["if_structure"] else []),
+        expand("result/cif_cpg/{sample}.{res}.{rep}.cpg.cif", sample=SAMPLES if config["if_structure"] else [],
+            res=["20k","50k","200k","1m"] if config["if_structure"] else [],
+            rep=list(range(5)) if config["if_structure"] else []),
 
         #cuttag part
         expand("processed/cuttag_all/{sample}.pairend.sort.bam", sample=SAMPLES if config["if_cuttag"] else [])
