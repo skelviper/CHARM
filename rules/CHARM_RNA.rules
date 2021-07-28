@@ -135,7 +135,7 @@ rule count:
         
         mkdir -p ./processed/RNA_all/feature_{wildcards.type}_{wildcards.genome}/
         
-        featureCounts -a {input.geneAnnotations} -o ./processed/RNA_all/feature_{wildcards.type}_{wildcards.genome}/gene_assigned -R BAM {input.bamIn} -T {threads} -Q 30 -t {wildcards.type} -g gene_name
+        featureCounts -a {input.geneAnnotations} -o ./processed/RNA_all/feature_{wildcards.type}_{wildcards.genome}/gene_assigned -R BAM {input.bamIn} -T {threads} -Q 30 -t {wildcards.type} -g gene_name -M -O --fraction
 
         #OUTPUT countMatix by gene
         samtools sort ./processed/RNA_all/feature_{wildcards.type}_{wildcards.genome}/star.Aligned.sortedByCoord.out.{wildcards.genome}.bam.featureCounts.bam -o ./processed/RNA_all/feature_{wildcards.type}_{wildcards.genome}/samsort.bam
@@ -146,3 +146,15 @@ rule count:
         conda deactivate
         set -u
         """
+
+rule convertCountFormat:
+    input:
+        countMatrix = rules.count.output.CountMatrix,
+    output:
+        convertedCountMatrix = "result/RNA_Res/counts.{type}.{genome}.format.tsv",
+    shell:"""
+        set +u; source activate; conda activate R4;set -u
+        
+        Rscript CHARM/CHARM_scripts/fraction.R {input.countMatrix} {output.convertedCountMatrix}
+        set +u; conda deactivate; set -u
+    """

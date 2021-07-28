@@ -16,4 +16,4 @@ for i in `find ./result/cleaned_pairs/c12 -name "*.pairs.gz"|sort`; do echo -n $
 
 find processed/ -name "*rms.info" | xargs -I {} grep --with-filename "top3 RMS RMSD" {} | sed -e "s/processed\///g" -e "s/\/3d_info\/50k.align.rms.info:\[M::__main__\] top3 RMS RMSD: /\t/g" | sort > ./stat/rmsd.info
 
-find processed -name "*.yperx.txt"| sort | parallel 'paste <(echo {}) <(cat {})' > ./stat/yperx.stat
+find processed -name "*.yperx.txt" | parallel 'paste <(echo {}) <(cat {})'| sort > ./stat/yperx.stat
