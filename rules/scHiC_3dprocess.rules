@@ -83,7 +83,7 @@ rule generate_cpg_CIF:
     shell:"""
         set +u; source activate; conda activate py3; set -u
 
-        python {input.hires} mmcif -i <(cat {input.tdg} | sed -e "s/(//g" -e "s/)//g") -o {output.cif} -b {input.cpg}  
+        python {input.hires} mmcif -i {input.tdg} -o {output.cif} -b {input.cpg}  
         
         set +u; conda deactivate; set -u
         """
