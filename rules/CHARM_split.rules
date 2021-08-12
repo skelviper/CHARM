@@ -1,28 +1,23 @@
-rule cutTagSplit:
+rule multiSplit:
     input:
         "Rawdata/{sample}/{sample}_R1.fq.gz",
         "Rawdata/{sample}/{sample}_R2.fq.gz",
-        #"Rawdata/{sample}_R1.fastq.gz",
-        #"Rawdata/{sample}_R2.fastq.gz",
     output: 
-        HiRES_R1="processed/{sample}/HiRES/{sample}.HiRES.R1.fq.gz",
-        HiRES_R2="processed/{sample}/HiRES/{sample}.HiRES.R2.fq.gz",
-        ct_R1="processed/{sample}/cuttag/{sample}.cuttag.R1.fq.gz",
-        ct_R2="processed/{sample}/cuttag/{sample}.cuttag.R2.fq.gz"
+        split_R1="processed/{sample}/{split}/{sample}.{split}.R1.fq.gz",
+        split_R2="processed/{sample}/{split}/{sample}.{split}.R2.fq.gz"
         
     threads: config["resources"]["cutadapt_cpu_threads"]
     resources:
         nodes = config["resources"]["cutadapt_cpu_threads"]
     params:
-        adapter=r"XGGTTGAGGTAGTGGTATAGCTTCGTGTATAAGAGACAG;o=32"
+        adapter=lambda wildcards: config["split"][wildcards.split]
     shell:"""
         set +u
         source ~/miniconda3/etc/profile.d/conda.sh
         conda activate py3
         set -u
-        cutadapt -G '{params.adapter}' -j {threads} --untrimmed-output {output.HiRES_R1} --untrimmed-paired-output {output.HiRES_R2} -o {output.ct_R1} -p {output.ct_R2} {input} 
-        cat {output.ct_R1} >> {output.HiRES_R1}
-        cat {output.ct_R2} >> {output.HiRES_R2}
+        
+        cutadapt -G '{params.adapter}' -j {threads} --untrimmed-output /dev/null --untrimmed-paired-output /dev/null -o {output.split_R1} -p {output.split_R2} {input} 
         
         set +u
         conda deactivate
@@ -31,9 +26,10 @@ rule cutTagSplit:
 
 rule split:
     input:
-        #[rules.cutTagSplit.output.HiRES_R1,rules.cutTagSplit.output.HiRES_R2] if config["if_cuttag"] else ["Rawdata/{sample}/{sample}_R1.fq.gz","Rawdata/{sample}/{sample}_R2.fq.gz",]
-        "Rawdata/{sample}_R1.fastq.gz",
-        "Rawdata/{sample}_R2.fastq.gz",
+        "Rawdata/{sample}/{sample}_R1.fq.gz",
+        "Rawdata/{sample}/{sample}_R2.fq.gz"
+        #"Rawdata/{sample}_R1.fastq.gz",
+        #"Rawdata/{sample}_R2.fastq.gz",
     output: 
         DNA_R1="processed/{sample}/DNA/{sample}.dna.R1.fq.gz",
         DNA_R2="processed/{sample}/DNA/{sample}.dna.R2.fq.gz",

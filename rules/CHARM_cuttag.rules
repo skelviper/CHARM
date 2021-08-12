@@ -1,9 +1,9 @@
 rule R2_mapping:
     input:
         ref_genome=config["refs"][config["ref_genome"]]["bwa_mem2_index"],
-        R2 = rules.cutTagSplit.output.ct_R2
+        R2 = rules.multiSplit.output.split_R2
     output:
-        R2sortbam = "processed/{sample}/cuttag/{sample}.R2.sort.bam"
+        R2sortbam = "processed/{sample}/{split}/{sample}.R2.sort.bam"
     threads:  config["resources"]["bwa_cpu_threads"],
     shell:"""
         set +u;source activate;conda activate py3;set -u
@@ -18,9 +18,9 @@ rule picard_sort_rmdup:
     input:
         R2sortbam = rules.R2_mapping.output.R2sortbam,
     output:
-        re_sort = temp("processed/{sample}/cuttag/{sample}.R2.querysort.bam"),
-        rmdup_bam = "processed/{sample}/cuttag/{sample}.R2.rmdup.bam",
-        rmdup_mat = "processed/{sample}/cuttag/{sample}.R2.rmdup.mat",
+        re_sort = temp("processed/{sample}/{split}/{sample}.{split}.R2.querysort.bam"),
+        rmdup_bam = "processed/{sample}/{split}/{sample}.{split}.R2.rmdup.bam",
+        rmdup_mat = "processed/{sample}/{split}/{sample}.{split}.R2.rmdup.mat",
 
     shell:"""
         set +u;source activate;conda activate py3;set -u
@@ -35,7 +35,7 @@ rule bam2bed:
     input:
         rmdup_bam = rules.picard_sort_rmdup.output.rmdup_bam,
     output:
-        R2_dedup_bed = "processed/{sample}/cuttag/{sample}.R2_5.bed.gz"
+        R2_dedup_bed = "processed/{sample}/{split}/{sample}.{split}.R2_5.bed.gz"
     shell:"""
         set +u;source activate;conda activate py3;set -u
 
@@ -46,11 +46,11 @@ rule bam2bed:
 
 rule fastq2tabfastq:
     input:
-        R1 = rules.cutTagSplit.output.ct_R1,
-        R2 = rules.cutTagSplit.output.ct_R2,
+        R1 = rules.multiSplit.output.split_R1,
+        R2 = rules.multiSplit.output.split_R2,
     output:
-        R1_out = temp("processed/{sample}/tabfastq/{sample}.R1.tabfastq.gz"),
-        R2_out = temp("processed/{sample}/tabfastq/{sample}.R2.tabfastq.gz"),
+        R1_out = temp("processed/{sample}/tabfastq/{sample}.{split}.R1.tabfastq.gz"),
+        R2_out = temp("processed/{sample}/tabfastq/{sample}.{split}.R2.tabfastq.gz"),
     shell:"""
         set +u;source activate;conda activate py3;set -u
 
@@ -67,8 +67,8 @@ rule extract_fastq:
         R1 = rules.fastq2tabfastq.output.R1_out,
         R2 = rules.fastq2tabfastq.output.R2_out,
     output:
-        R1out_tabfastq = temp("processed/{sample}/tabfastq/{sample}.R1.dedup.tabfastq.gz"),
-        R2out_tabfastq = temp("processed/{sample}/tabfastq/{sample}.R2.dedup.tabfastq.gz"),
+        R1out_tabfastq = temp("processed/{sample}/tabfastq/{sample}.{split}.R1.dedup.tabfastq.gz"),
+        R2out_tabfastq = temp("processed/{sample}/tabfastq/{sample}.{split}.R2.dedup.tabfastq.gz"),
     params:
         max_sep_distance = 20,
         min_mapping_qual = 30,
@@ -86,8 +86,8 @@ rule tabfastq2fastq:
         R1tab = rules.extract_fastq.output.R1out_tabfastq,
         R2tab = rules.extract_fastq.output.R2out_tabfastq,
     output:
-        R1 = "processed/{sample}/cuttag/{sample}.dedup.R1.fq.gz",
-        R2 = "processed/{sample}/cuttag/{sample}.dedup.R2.fq.gz",
+        R1 = "processed/{sample}/{split}/{sample}.{split}.dedup.R1.fq.gz",
+        R2 = "processed/{sample}/{split}/{sample}.{split}.dedup.R2.fq.gz",
     shell:"""
         set +u;source activate;conda activate py3;set -u
 
@@ -102,7 +102,7 @@ rule pair_end_mapping:
         R2dedup = rules.tabfastq2fastq.output.R2,
         ref_genome=config["refs"][config["ref_genome"]]["bwa_mem2_index"],
     output:
-        sortbam = "processed/cuttag_all/{sample}.pairend.sort.bam"
+        sortbam = "processed/{split}_all/{sample}.{split}.pairend.sort.bam"
     threads:  config["resources"]["bwa_cpu_threads"],
     resources:
         nodes =  config["resources"]["bwa_cpu_threads"],
