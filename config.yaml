@@ -4,7 +4,7 @@ if_RNA_snp_split: True
 if_cuttag: True
 
 ref_genome: GRCh37d5 # GRCm38 or GRCh37d5
-yperx_threshold: 0.5 # GM12878 is all female.
+yperx_threshold: 0.5 # GM12878 is all female,set a bigger value
 softwares:
   HIRES: /share/home/zliu/biosoft/hires_utils
   HICKIT: /share/home/zliu/biosoft/hickit-0.1.1_x64-linux/

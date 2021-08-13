@@ -117,3 +117,23 @@ rule pair_end_mapping:
         conda deactivate
         set -u
         """
+        
+rule generate_stat_ct:
+    input:
+        expand("processed/{sample}/{split}/{sample}.{split}.R1.fq.gz", sample=SAMPLES if config["if_cuttag"] else [],split=SPLIT if config ["if_cuttag"] else []),
+        expand("processed/{split}_all/{sample}.{split}.pairend.sort.bam", sample=SAMPLES if config["if_cuttag"] else [],split=SPLIT if config ["if_cuttag"] else []),
+    output:
+        readstat="stat/{split}.read.stat",
+        fragstat="stat/{split}.frag.stat",
+    threads: config["resources"]["generateStat_cpu_threads"]
+    shell:"""
+        set +u
+        source ~/miniconda3/etc/profile.d/conda.sh
+        conda activate py3
+        set -u
+        find processed/*/{wildcards.split}/*.{wildcards.split}.R1.fq.gz | parallel 'echo -e {{}} "\t\c"; zcat {{}} | wc -l' | sort > {output.readstat}
+        find processed/{wildcards.split}_all/*.bam | parallel 'echo -e {{}}"\t\c";samtools flagstat {{}} | grep read1 | sed "s/ + 0 read1//g"'| sort > {output.fragstat}
+        set +u
+        conda deactivate
+        set -u
+    """
