@@ -45,6 +45,9 @@ rule all:
         expand("processed/{split}_all/{sample}.{split}.pairend.sort.bam", sample=SAMPLES if config["if_cuttag"] else [],split=SPLIT if config ["if_cuttag"] else []),
         expand("stat/{split}.read.stat",split=SPLIT if config ["if_cuttag"] else []),
         expand("stat/{split}.frag.stat",split=SPLIT if config ["if_cuttag"] else []),
+        expand("result/radialPos/{res}/{sample}.rp.{res}.{rep}.color", sample=SAMPLES if config["if_structure"] else [],
+            res=["20k","50k","200k","1m"] if config["if_structure"] else [],
+            rep=list(range(5)) if config["if_structure"] else []),
     threads: config["resources"]["generateStat_cpu_threads"] 
     shell:"""
         ./CHARM/CHARM_scripts/generateStat.sh

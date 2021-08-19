@@ -87,3 +87,17 @@ rule generate_cpg_CIF:
         
         set +u; conda deactivate; set -u
         """
+
+rule generate_radial_pos:
+    input:
+        tdg_clean = rules.hickit_clean3D.output.clean,
+    output:
+        radial_pos = "result/radialPos/{res}/{sample}.rp.{res}.{rep}.color"
+    shell:"""
+        set +u; source activate; conda activate dipc; set -u
+        
+        mkdir -p result/radialPos/{wildcards.res}
+        ~/biosoft/dip-c/dip-c color -C {input.tdg_clean} > {output.radial_pos}
+        
+        set +u; conda deactivate; set -u
+    """
