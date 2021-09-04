@@ -1,9 +1,9 @@
 if_snp: True
 if_structure: True
 if_RNA_snp_split: True
-if_cuttag: False
+if_cuttag: True
 
-ref_genome: GRCm38 # GRCm38 or GRCh37d5
+ref_genome: GRCh37d5 # GRCm38 or GRCh37d5
 yperx_threshold: 0.015 # GM12878 is all female,set a bigger value
 softwares:
   HIRES: /share/home/zliu/biosoft/hires_utils
