@@ -7,7 +7,7 @@ if (length(args)==0) {
 
 
 library(tidyverse)
-countMatrix<- read_table2(args[1]) %>% select(-X2)
+countMatrix<- read_table2(args[1])
 
 if(dim(countMatrix)[2]<2){
     write_tsv(x=countMatrix,path=args[2])
