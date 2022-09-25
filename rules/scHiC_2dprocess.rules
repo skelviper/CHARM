@@ -98,6 +98,7 @@ rule cleanPairs:
     output: 
         clean1_pairs= "result/cleaned_pairs/c1/{sample}.pairs.gz",
         clean12_pairs = "result/cleaned_pairs/c12/{sample}.pairs.gz",
+        clean123_pairs = "result/cleaned_pairs/c123/{sample}.pairs.gz",
     threads: config["resources"]["hires_clean_cpu_threads"]
     resources:
         nodes = config["resources"]["hires_clean_cpu_threads"]
@@ -107,7 +108,8 @@ rule cleanPairs:
         conda activate py3
         set -u
         python {input.hires} clean_leg -t {threads} {input.contacts_pairs} -o {output.clean1_pairs}
-        python {input.hires} clean_isolated -t {threads} -o {output.clean12_pairs} {output.clean1_pairs} 
+        python {input.hires} clean_isolated -t {threads} -o {output.clean12_pairs} {output.clean1_pairs}
+        python {input.hires} clean_splicing {output.clean12_pairs} -r /share/Data/public/ref_genome/mouse_ref/M23/raw_data/gencode.vM23.annotation.gtf.gz -o {output.clean123_pairs} -t {threads}
         set +u
         conda deactivate
         set -u
@@ -117,7 +119,7 @@ rule cleanPairs:
 rule hickit_2d:
     input:
         hickit = config["softwares"]["HICKIT"],
-        cleaned_pairs = rules.cleanPairs.output.clean12_pairs,
+        cleaned_pairs = rules.cleanPairs.output.clean123_pairs,
     output:
         impute_pairs = "result/impute/pairs/{sample}.impute.pairs.gz",
         impute_val = "result/impute/val/{sample}.impute.val",

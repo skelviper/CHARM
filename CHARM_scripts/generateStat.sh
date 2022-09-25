@@ -11,6 +11,8 @@ find ./processed -name "*.dna.R1.fq.gz" | parallel --tag 'zcat {} | wc -l' | sor
 find ./processed -name "contacts.pairs.gz" | parallel --tag 'zcat {} | grep -v "^#" |wc -l' | sort > ./stat/pairs.dedup.stat
 find ./result/cleaned_pairs/c1 -name "*.pairs.gz" | parallel --tag 'zcat {} |grep -v "^#" | wc -l' | sort > ./stat/pairs.c1.stat
 find ./result/cleaned_pairs/c12 -name "*.pairs.gz" | parallel --tag 'zcat {} | grep -v "^#" |wc -l' | sort > ./stat/pairs.c12.stat
+find ./result/cleaned_pairs/c123 -name "*.pairs.gz" | parallel --tag 'zcat {} | grep -v "^#" |wc -l' | sort > ./stat/pairs.c123.stat
+for i in `find ./result/cleaned_pairs/c123 -name "*.pairs.gz" |sort`; do echo -n $i;echo -n -e "\t";zcat $i| grep -v "^#" | awk '$2!=$4 {print $0}' | wc -l; done > ./stat/inter.pairs.c123.stat
 
 for i in `find ./result/cleaned_pairs/c12 -name "*.pairs.gz" |sort`; do echo -n $i;echo -n -e "\t";zcat $i| grep -v "^#" | awk '$2!=$4 {print $0}' | wc -l; done > ./stat/inter.pairs.c12.stat
 

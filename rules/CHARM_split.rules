@@ -26,10 +26,10 @@ rule multiSplit:
 
 rule split:
     input:
-        #"Rawdata/{sample}/{sample}_R1.fq.gz",
-        #"Rawdata/{sample}/{sample}_R2.fq.gz"
-        "Rawdata/{sample}_R1.fq.gz",
-        "Rawdata/{sample}_R2.fq.gz",
+        "Rawdata/{sample}/{sample}_R1.fq.gz",
+        "Rawdata/{sample}/{sample}_R2.fq.gz"
+        #"Rawdata/{sample}_R1.fq.gz",
+        #"Rawdata/{sample}_R2.fq.gz",
     output: 
         DNA_R1="processed/{sample}/DNA/{sample}.dna.R1.fq.gz",
         DNA_R2="processed/{sample}/DNA/{sample}.dna.R2.fq.gz",
