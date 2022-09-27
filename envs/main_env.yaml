@@ -19,6 +19,7 @@ dependencies:
   - subread=2.0.1=hed695b0_0
   - r-base=4.1
   - r-tidyverse
+  - parallel
   - pip:
     - cooltools==0.5.1
     - rmsd==1.4
