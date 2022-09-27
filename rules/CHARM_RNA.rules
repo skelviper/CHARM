@@ -9,21 +9,15 @@ rule extract_umi:
     resources:
         nodes = 1
     params:
-        pattern=r"NNNNNNNN"
+        pattern=r"NNNNNNNN",
+    conda:"../envs/main_env.yaml"
     shell: """
-        set +u
-        source ~/miniconda3/etc/profile.d/conda.sh
-        conda activate py3
-        set -u
         umi_tools extract -p {params.pattern} -I {input.RNA_R2} -S {output.umi2} --read2-in={input.RNA_R1} --read2-out={output.umi1}
 
         gunzip --force -c {output.umi1} > processed/{wildcards.sample}/umi/umi.{wildcards.sample}.rna.R1.fq
 
         sed 's/_/_{wildcards.sample}_/' processed/{wildcards.sample}/umi/umi.{wildcards.sample}.rna.R1.fq > {output.unzip_umi1}
 
-        set +u
-        conda deactivate 
-        set -u
         """
 #output UMIs matrix.
 
@@ -32,6 +26,7 @@ rule RNAmerge:
         expand("processed/RNA_all/umibycell.{sample}.rna.R1.fq",sample=SAMPLES)
     output:
         rnaAll = temp("processed/RNA_all/rnaAll.fq"),
+    conda:"../envs/main_env.yaml",
     shell:"""
         cat {input} > {output.rnaAll}
     """
@@ -44,13 +39,11 @@ rule RNAclean:
     threads: config["resources"]["cutadapt_cpu_threads"]
     resources:
         nodes = config["resources"]["cutadapt_cpu_threads"]
+    conda:"../envs/main_env.yaml",
     shell:"""
-        set +u; source activate; conda activate py3; set -u
-
         # cut nextera transposes and clean empty line.
         cutadapt -a CTGTCTCTTATA {input.rnaAll} -j {threads} | sed 'N;N;N;/\\n\\n/d' > {output.rnaAllclean}
-        
-        set +u; conda deactivate; set -u
+
     """
 
 rule star_mapping:
@@ -62,19 +55,13 @@ rule star_mapping:
     threads: config["resources"]["star_cpu_threads"]
     resources:
         nodes = config["resources"]["star_cpu_threads"]
+    conda:"../envs/main_env.yaml"
     shell:"""
-        set +u
-        source ~/miniconda3/etc/profile.d/conda.sh
-        conda activate py3
-        set -u
         STAR --runThreadN {threads} \
         --genomeDir {input.starIndex} \
         --readFilesIn {input.fastqIn} \
         --outFileNamePrefix processed/RNA_all/starOut/star. \
         --outSAMtype BAM Unsorted SortedByCoordinate --outReadsUnmapped Fastx --outSAMattributes NH HI NM MD
-        set +u
-        conda deactivate
-        set =u
         """
 
 rule makeFolder:
@@ -82,6 +69,7 @@ rule makeFolder:
         bam = rules.star_mapping.output.bamOut,
     output:
         totalBamOut = "processed/RNA_all/bamToCount/star.Aligned.sortedByCoord.out.total.bam",
+    conda:"../envs/main_env.yaml",
     shell:"""
         mkdir -p processed/RNA_all/bamToCount
         cp {input.bam} {output.totalBamOut}
@@ -98,12 +86,8 @@ rule RNA_snp_split:
         genome2BamOut = "processed/RNA_all/snpSplitRes/star.Aligned.sortedByCoord.out.genome2.bam",
         genome1Copied = "processed/RNA_all/bamToCount/star.Aligned.sortedByCoord.out.genome1.bam",
         genome2Copied = "processed/RNA_all/bamToCount/star.Aligned.sortedByCoord.out.genome2.bam",
-
+    conda:"../envs/main_env.yaml"
     shell:"""
-        set +u
-        source ~/miniconda3/etc/profile.d/conda.sh
-        conda activate chip
-        set -u
         
         mkdir -p processed/RNA_all/snpSplitRes
         SNPsplit --snp_file {input.RNAsnp} {input.bamToProcess} -o {output.dirOut}
@@ -111,9 +95,6 @@ rule RNA_snp_split:
         cp {output.genome1BamOut} {output.genome1Copied}
         cp {output.genome2BamOut} {output.genome2Copied}
 
-        set +u
-        conda deactivate
-        set =u
         """
         
 rule count:
@@ -127,11 +108,8 @@ rule count:
     threads: config["resources"]["count_cpu_threads"]
     resources:
         nodes = config["resources"]["count_cpu_threads"]
+    conda:"../envs/main_env.yaml"
     shell:"""
-        set +u
-        source ~/miniconda3/etc/profile.d/conda.sh
-        conda activate py3
-        set -u
         
         mkdir -p ./processed/RNA_all/feature_{wildcards.type}_{wildcards.genome}/
         
@@ -141,10 +119,7 @@ rule count:
         samtools sort ./processed/RNA_all/feature_{wildcards.type}_{wildcards.genome}/star.Aligned.sortedByCoord.out.{wildcards.genome}.bam.featureCounts.bam -o ./processed/RNA_all/feature_{wildcards.type}_{wildcards.genome}/samsort.bam
         samtools index ./processed/RNA_all/feature_{wildcards.type}_{wildcards.genome}/samsort.bam
         umi_tools count {params.countParams} -I ./processed/RNA_all/feature_{wildcards.type}_{wildcards.genome}/samsort.bam -S ./result/RNA_Res/counts.{wildcards.type}.{wildcards.genome}.tsv
-        
-        set +u
-        conda deactivate
-        set -u
+
         """
 
 rule convertCountFormat:
@@ -152,9 +127,9 @@ rule convertCountFormat:
         countMatrix = rules.count.output.CountMatrix,
     output:
         convertedCountMatrix = "result/RNA_Res/counts.{type}.{genome}.format.tsv",
+    conda:"../envs/main_env.yaml"
     shell:"""
-        set +u; source activate; conda activate R4;set -u
         
         Rscript CHARM/CHARM_scripts/fraction.R {input.countMatrix} {output.convertedCountMatrix}
-        set +u; conda deactivate; set -u
+        
     """

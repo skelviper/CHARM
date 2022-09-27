@@ -13,7 +13,7 @@ import os
 SAMPLES = [i.split(sep='_')[0] for i in os.listdir("./Rawdata")]
 SPLIT = ["atac","ct"]
 #SAMPLES = os.listdir("./Rawdata")
-#SAMPLES = ["E752001"]
+#SAMPLES = ["d0-1"]
 
 configfile: "CHARM/config.yaml"
 
@@ -36,18 +36,18 @@ rule all:
         expand("processed/{sample}/3d_info/{res}.{rep}.3dg", sample=SAMPLES if config["if_structure"] else [],
             res=["20k","50k","200k","1m"] if config["if_structure"] else [],
             rep=list(range(5)) if config["if_structure"] else []),
-        expand("result/cif_cpg/{sample}.{res}.{rep}.cpg.cif", sample=SAMPLES if config["if_structure"] else [],
-            res=["20k","50k","200k","1m"] if config["if_structure"] else [],
-            rep=list(range(5)) if config["if_structure"] else []),
+#        expand("result/cif_cpg/{sample}.{res}.{rep}.cpg.cif", sample=SAMPLES if config["if_structure"] else [],
+#            res=["20k","50k","200k","1m"] if config["if_structure"] else [],
+#            rep=list(range(5)) if config["if_structure"] else []),
 
         #cuttag part
         expand("processed/{sample}/{split}/{sample}.{split}.R1.fq.gz", sample=SAMPLES if config["if_cuttag"] else [],split=SPLIT if config ["if_cuttag"] else []),
         expand("processed/{split}_all/{sample}.{split}.pairend.sort.bam", sample=SAMPLES if config["if_cuttag"] else [],split=SPLIT if config ["if_cuttag"] else []),
         expand("stat/{split}.read.stat",split=SPLIT if config ["if_cuttag"] else []),
         expand("stat/{split}.frag.stat",split=SPLIT if config ["if_cuttag"] else []),
-        expand("result/radialPos/{res}/{sample}.rp.{res}.{rep}.color", sample=SAMPLES if config["if_structure"] else [],
-            res=["20k","50k","200k","1m"] if config["if_structure"] else [],
-            rep=list(range(5)) if config["if_structure"] else []),
+#        expand("result/radialPos/{res}/{sample}.rp.{res}.{rep}.color", sample=SAMPLES if config["if_structure"] else [],
+#            res=["20k","50k","200k","1m"] if config["if_structure"] else [],
+#            rep=list(range(5)) if config["if_structure"] else []),
     threads: config["resources"]["generateStat_cpu_threads"] 
     shell:"""
         ./CHARM/CHARM_scripts/generateStat.sh

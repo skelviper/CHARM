@@ -11,16 +11,12 @@ rule bwa_map:
         nodes = config["resources"]["bwa_cpu_threads"],
     params:
         extra=r"-R '@RG\tID:{sample}\tPL:ILLUMINA\tSM:{sample}'",
+    conda:"../envs/main_env.yaml",
     shell:"""
-        set +u
-        source ~/miniconda3/etc/profile.d/conda.sh
-        conda activate py3
-        set -u
+
         bwa-mem2 mem -5SP -t{threads} {params.extra} {input.ref_genome} {input.DNA1} {input.DNA2} | samtools sort -@{threads} -o {output.bam} -
         samtools index -@{threads} {output.bam} {output.bamidx}
-        set +u
-        conda deactivate
-        set -u
+
         """
 
 rule align2pairs:
@@ -42,11 +38,8 @@ rule align2pairs:
     resources:
         mem_mb = 10000,
         nodes = config["resources"]["align2pairs_cpu_threads"],
+    conda:"../envs/main_env.yaml"
     shell: """
-        set +u
-        source ~/miniconda3/etc/profile.d/conda.sh
-        conda activate py3
-        set -u
         # decide sex
         yperx=`awk 'BEGIN{{printf "%.6f",('$(samtools view -q 30 {input.bam} chrY |wc -l)'/'$(samtools view -q 30 {input.bam} chrX | wc -l)')}}'`
         echo $yperx > {log.yperx} 
@@ -58,9 +51,7 @@ rule align2pairs:
         else
         samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg -v {input.snp_file} - 2> {log.contacts_seg_log} | {input.hickit}/hickit.js chronly -y - | sed 's/-/+/g' | gzip > {output.contacts_seg}
         fi
-        set +u
-        conda deactivate
-        set -u
+
     """
 
 rule seg2pairs:
@@ -73,20 +64,14 @@ rule seg2pairs:
     log:
         raw_pairs_log = "processed/{sample}/2d_info/raw.pairs.log",
         contacts_pairs_log = "processed/{sample}/2d_info/contacts.pairs.log",
+    conda:"../envs/main_env.yaml",
     shell:"""
-        set +u
-        source ~/miniconda3/etc/profile.d/conda.sh
-        conda activate py3
-        set -u
 
         #generate raw.pairs.gz for statistics
         {input.hickit}/hickit --dup-dist=0 -i {input.contacts_seg} -o - 2> {log.raw_pairs_log} | gzip > {output.raw_pairs}
         #generate real pairs
         {input.hickit}/hickit --dup-dist=500 -i {input.contacts_seg} -o - 2> {log.contacts_pairs_log} | gzip > {output.contacts_pairs}
 
-        set +u
-        conda deactivate
-        set -u
     """
 
 #clean premiscus legs and isolatied contacts
@@ -101,18 +86,16 @@ rule cleanPairs:
         clean123_pairs = "result/cleaned_pairs/c123/{sample}.pairs.gz",
     threads: config["resources"]["hires_clean_cpu_threads"]
     resources:
-        nodes = config["resources"]["hires_clean_cpu_threads"]
+        nodes = config["resources"]["hires_clean_cpu_threads"],
+    params:
+        ref_annotation = config["refs"][config["ref_genome"]]["annotations"],
+    conda:"../envs/main_env.yaml"
     shell:"""
-        set +u
-        source ~/miniconda3/etc/profile.d/conda.sh
-        conda activate py3
-        set -u
+
         python {input.hires} clean_leg -t {threads} {input.contacts_pairs} -o {output.clean1_pairs}
         python {input.hires} clean_isolated -t {threads} -o {output.clean12_pairs} {output.clean1_pairs}
-        python {input.hires} clean_splicing {output.clean12_pairs} -r /share/Data/public/ref_genome/mouse_ref/M23/raw_data/gencode.vM23.annotation.gtf.gz -o {output.clean123_pairs} -t {threads}
-        set +u
-        conda deactivate
-        set -u
+        python {input.hires} clean_splicing {output.clean12_pairs} -r {params.ref_annotation} -o {output.clean123_pairs} -t {threads}
+
     """
 
 
@@ -128,20 +111,14 @@ rule hickit_2d:
         impute_val_log = "processed/{sample}/2d_info/{sample}.impute.val.log",
     resources:
         nodes = 1
+    conda:"../envs/main_env.yaml",
     shell:"""
-        set +u
-        source ~/miniconda3/etc/profile.d/conda.sh
-        conda activate py3
-        set -u
 
         #impute phases
         {input.hickit}/hickit -i {input.cleaned_pairs} -u -o - 2> {log.impute_pairs_log} | bgzip > {output.impute_pairs}
         # estimate imputation accuracy by holdout
         {input.hickit}/hickit -i {input.cleaned_pairs} --out-val={output.impute_val} 2> {log.impute_val_log}
 
-        set +u
-        conda deactivate
-        set -u
         """
 
 rule sep_for_clean:
@@ -156,17 +133,12 @@ rule sep_for_clean:
     threads: 4
     resources:
         nodes = 4
-    output:
+    conda:"../envs/main_env.yaml",
 
     shell:"""
-        set +u
-        source ~/miniconda3/etc/profile.d/conda.sh
-        conda activate py3
-        set -u
+
         python {input.hires} sep_clean -n {threads} -o1 {output.dip_pairs} -o2 {output.hickit_pairs} {input.impute_pairs}
-        set +u
-        conda deactivate
-        set -u
+
     """
 
 
