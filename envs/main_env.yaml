@@ -20,6 +20,10 @@ dependencies:
   - r-base=4.1
   - r-tidyverse
   - parallel
+  - picard=2.23.3=0
+  - seqkit=0.13.2
+  - bedtools=2.29.2
+  - r-bedtoolsr=2.30
   - pip:
     - cooltools==0.5.1
     - rmsd==1.4

@@ -11,7 +11,7 @@ import os
 
 #input
 SAMPLES = [i.split(sep='_')[0] for i in os.listdir("./Rawdata")]
-SPLIT = ["atac","ct"]
+SPLIT = ["ct"]
 #SAMPLES = os.listdir("./Rawdata")
 #SAMPLES = ["d0-1"]
 

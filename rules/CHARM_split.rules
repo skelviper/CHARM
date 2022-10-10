@@ -12,6 +12,7 @@ rule multiSplit:
     params:
         adapter=lambda wildcards: config["split"][wildcards.split]
     shell:"""
+        mkdir -p processed/{wildcards.sample}/{wildcards.split}
         cutadapt -G '{params.adapter}' -j {threads} --untrimmed-output /dev/null --untrimmed-paired-output /dev/null -o {output.split_R1} -p {output.split_R2} {input} 
         """
 
