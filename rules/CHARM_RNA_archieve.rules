@@ -3,23 +3,37 @@ rule extract_umi:
         RNA_R1="processed/{sample}/RNA/{sample}.rna.clean.R1.fq.gz",
         RNA_R2="processed/{sample}/RNA/{sample}.rna.clean.R2.fq.gz"
     output:
-        tumi1=temp("processed/{sample}/umi/tumi.{sample}.rna.R1.fq.gz"),
         umi1="processed/{sample}/umi/umi.{sample}.rna.R1.fq.gz",
         umi2="processed/{sample}/umi/umi.{sample}.rna.R2.fq.gz",
+        unzip_umi1="processed/RNA_all/umibycell.{sample}.rna.R1.fq"
     resources:
         nodes = 1
     params:
         pattern=r"NNNNNNNN",
     conda:"../envs/main_env.yaml"
     shell: """
-        umi_tools extract -p {params.pattern} -I {input.RNA_R2} -S {output.umi2} --read2-in={input.RNA_R1} --read2-out={output.tumi1}
-        zcat {output.umi1} | sed 's/_/_{wildcards.sample}_/' | gzip > {output.unzip_umi1}
+        umi_tools extract -p {params.pattern} -I {input.RNA_R2} -S {output.umi2} --read2-in={input.RNA_R1} --read2-out={output.umi1}
+
+        gunzip --force -c {output.umi1} > processed/{wildcards.sample}/umi/umi.{wildcards.sample}.rna.R1.fq
+
+        sed 's/_/_{wildcards.sample}_/' processed/{wildcards.sample}/umi/umi.{wildcards.sample}.rna.R1.fq > {output.unzip_umi1}
+
         """
 #output UMIs matrix.
 
+rule RNAmerge:
+    input:
+        expand("processed/RNA_all/umibycell.{sample}.rna.R1.fq",sample=SAMPLES)
+    output:
+        rnaAll = temp("processed/RNA_all/rnaAll.fq"),
+    conda:"../envs/main_env.yaml",
+    shell:"""
+        cat {input} > {output.rnaAll}
+    """
+
 rule RNAclean:
     input:
-        rnaAll = rules.extract_umi.output.rnaAll,
+        rnaAll = rules.RNAmerge.output.rnaAll,
     output:
         rnaAllclean="processed/RNA_all/rnaAll.clean.fq"
     threads: config["resources"]["cutadapt_cpu_threads"]
