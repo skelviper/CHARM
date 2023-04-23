@@ -1,5 +1,5 @@
 if_snp: True
-if_structure: False
+if_structure: True
 if_RNA_snp_split: False
 if_cuttag: True
 

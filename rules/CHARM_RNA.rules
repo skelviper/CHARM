@@ -17,9 +17,19 @@ rule extract_umi:
         """
 #output UMIs matrix.
 
+rule RNAmerge:
+    input:
+        expand("processed/RNA_all/umibycell.{sample}.rna.R1.fq",sample=SAMPLES)
+    output:
+        rnaAll = temp("processed/RNA_all/rnaAll.fq"),
+    conda:"../envs/main_env.yaml",
+    shell:"""
+        cat {input} > {output.rnaAll}
+    """
+
 rule RNAclean:
     input:
-        rnaAll = rules.extract_umi.output.rnaAll,
+        rnaAll = rules.RNAmerge.output.rnaAll,
     output:
         rnaAllclean="processed/RNA_all/rnaAll.clean.fq"
     threads: config["resources"]["cutadapt_cpu_threads"]
