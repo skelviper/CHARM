@@ -20,6 +20,7 @@ rule bam2bed:
     output:
         R2_bed = "processed/{sample}/{split}/{sample}.{split}.R2_5.bed.gz"
     conda:"../envs/main_env.yaml",
+    threads: 4
     shell:"""
 
         samtools view {input.R2sortbam} | xargs -I {{}} printf '{{}}\n%.0s' {{1..2}} | \

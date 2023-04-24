@@ -13,7 +13,8 @@ import os
 SAMPLES = [i.split(sep='_')[0] for i in os.listdir("./Rawdata")]
 SPLIT = ["ct","atac"]
 #SAMPLES = os.listdir("./Rawdata")
-#SAMPLES = ["d0-1"]
+#SAMPLES = ["MBme3001","MBme3002","MBme3003","MBme3004","MBme3005","MBme3006","MBme3007","MBme3008","MBme3009",
+           #"MBAc001","MBAc002","MBAc003","MBAc004","MBAc005","MBAc006","MBAc007","MBAc008","MBAc009"]
 
 configfile: "CHARM/config.yaml"
 
@@ -24,10 +25,10 @@ decide what you need for your down stream analysis.
 rule all:
     input:
         #preliminary split
-        expand("processed/RNA_all/umibycell.{sample}.rna.R1.fq",sample=SAMPLES),
+#        expand("processed/RNA_all/umibycell.{sample}.rna.R1.fq",sample=SAMPLES),
         #RNA part
-        expand("result/RNA_Res/counts.{type}.{genome}.tsv",type=["gene","exon"],genome=["total","genome1","genome2"] if config["if_RNA_snp_split"] else ["total"]),
-        expand("result/RNA_Res/counts.{type}.{genome}.format.tsv",type=["gene","exon"],genome=["total","genome1","genome2"] if config["if_RNA_snp_split"] else ["total"]),
+#        expand("result/RNA_Res/counts.{type}.{genome}.tsv",type=["gene","exon"],genome=["total","genome1","genome2"] if config["if_RNA_snp_split"] else ["total"]),
+#        expand("result/RNA_Res/counts.{type}.{genome}.format.tsv",type=["gene","exon"],genome=["total","genome1","genome2"] if config["if_RNA_snp_split"] else ["total"]),
         #Hi-C part pairs info
         expand("result/cleaned_pairs/c12/{sample}.pairs.gz",sample=SAMPLES),
         expand("result/dip_pairs/{sample}.dip.pairs.gz",sample=SAMPLES),
