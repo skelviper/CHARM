@@ -54,7 +54,7 @@ rule foramt_fragmenets:
     input:
         fragments = rules.generate_dedup_fragments.output.fragments,
     output:
-        format_fragments = temp("processed/{split}_all/{sample}.{split}.format_frag.bed.gz")
+        format_fragments = "processed/{split}_all/{sample}.{split}.format_frag.bed.gz"
     conda:"../envs/main_env.yaml",
     shell:"""
         zcat {input.fragments} | cut -f 1-3 | awk '{{OFS="\t"}}{{print $0"\t{wildcards.sample}\t1"}}' | gzip > {output.format_fragments}
