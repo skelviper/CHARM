@@ -9,7 +9,6 @@ rule hickit_3d:
         tdg_20k = "processed/{sample}/3d_info/20k.{rep}.3dg",
     resources:
         nodes = 1
-    conda:"../envs/main_env.yaml"
     shell: """
 
         {input.hickit}/hickit -s{wildcards.rep} -M \
@@ -25,21 +24,20 @@ rule hickit_clean3D:
     input:
         tdg_20k = rules.hickit_3d.output.tdg_20k,
         dip_pairs = rules.sep_for_clean.output.dip_pairs,
-        hires = config["softwares"]["HIRES"],
+        charmtools = config["softwares"]["CHARMtools"],
     output:
         clean = "processed/{sample}/3d_info/clean.{res}.{rep}.3dg"
     resources:
         nodes = 1
-    conda:"../envs/main_env.yaml"
     shell: """
-
-        python {input.hires} clean3 -r {input.dip_pairs} -i processed/{wildcards.sample}/3d_info/{wildcards.res}.{wildcards.rep}.3dg -o {output.clean}
+    
+        python {input.charmtools} clean3 -r {input.dip_pairs} -i processed/{wildcards.sample}/3d_info/{wildcards.res}.{wildcards.rep}.3dg -o {output.clean}
         
         """
 
 rule hickit_align3D:
     input:
-        hires = config["softwares"]["HIRES"],
+        charmtools = config["softwares"]["CHARMtools"],
         tdg_clean0 = "processed/{sample}/3d_info/clean.{res}.0.3dg",
         tdg_clean1 = "processed/{sample}/3d_info/clean.{res}.1.3dg",
         tdg_clean2 = "processed/{sample}/3d_info/clean.{res}.2.3dg",
@@ -49,7 +47,7 @@ rule hickit_align3D:
         rmsInfo ="processed/{sample}/3d_info/{sample}.{res}.align.rms.info"
     resources:
         nodes = 1
-    conda:"../envs/main_env.yaml"
+
     shell:"""
         
         python ./CHARM/CHARM_scripts/hires3dAligner.py processed/{wildcards.sample}/3d_info/clean.{wildcards.res}.[0-4].3dg 2> {output.rmsInfo} > /dev/null
@@ -59,15 +57,14 @@ rule hickit_align3D:
 rule generate_cpg_CIF:
     input:
         tdg = rules.hickit_clean3D.output.clean,
-        hires = config["softwares"]["HIRES"],
+        charmtools = config["softwares"]["CHARMtools"],
         rmsInfo = rules.hickit_align3D.output.rmsInfo,
         cpg = lambda wildcards: config["refs"][config["ref_genome"]]["cpg"][wildcards.res],
     output:
         cif="result/cif_cpg/{sample}.{res}.{rep}.cpg.cif",
-    conda:"../envs/main_env.yaml"
     shell:"""
 
-        python {input.hires} mmcif -i {input.tdg} -o {output.cif} -b {input.cpg}  
+        python {input.charmtools} mmcif -i {input.tdg} -o {output.cif} -b {input.cpg}  
         
         """
 
@@ -77,7 +74,6 @@ rule generate_radial_pos:
         tdg_clean = rules.hickit_clean3D.output.clean,
     output:
         radial_pos = "result/radialPos/{res}/{sample}.rp.{res}.{rep}.color",
-    conda:"../envs/main_env.yaml",
     shell:"""
     
         mkdir -p result/radialPos/{wildcards.res}

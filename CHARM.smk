@@ -11,10 +11,7 @@ import os
 
 #input
 SAMPLES = [i.split(sep='_')[0] for i in os.listdir("./Rawdata")]
-SPLIT = ["atac"]
-#SAMPLES = os.listdir("./Rawdata")
-#SAMPLES = ["MBme3001","MBme3002","MBme3003","MBme3004","MBme3005","MBme3006","MBme3007","MBme3008","MBme3009",
-           #"MBAc001","MBAc002","MBAc003","MBAc004","MBAc005","MBAc006","MBAc007","MBAc008","MBAc009"]
+SPLIT = ["atac","ct"]
 
 configfile: "CHARM/config.yaml"
 
@@ -25,7 +22,7 @@ decide what you need for your down stream analysis.
 rule all:
     input:
         #preliminary split
-        expand("processed/RNA_all/umibycell.{sample}.rna.R1.fq",sample=SAMPLES),
+        expand("processed/{sample}/umi/umi.{sample}.rna.R2.fq.gz",sample=SAMPLES),
         #RNA part
         expand("result/RNA_Res/counts.{type}.{genome}.tsv",type=["gene","exon"],genome=["total","genome1","genome2"] if config["if_RNA_snp_split"] else ["total"]),
         expand("result/RNA_Res/counts.{type}.{genome}.format.tsv",type=["gene","exon"],genome=["total","genome1","genome2"] if config["if_RNA_snp_split"] else ["total"]),
@@ -37,19 +34,12 @@ rule all:
         expand("processed/{sample}/3d_info/{res}.{rep}.3dg", sample=SAMPLES if config["if_structure"] else [],
             res=["20k","50k","200k","1m"] if config["if_structure"] else [],
             rep=list(range(5)) if config["if_structure"] else []),
-#        expand("result/cif_cpg/{sample}.{res}.{rep}.cpg.cif", sample=SAMPLES if config["if_structure"] else [],
-#            res=["20k","50k","200k","1m"] if config["if_structure"] else [],
-#            rep=list(range(5)) if config["if_structure"] else []),
 
         #cuttag part
-        expand("processed/{sample}/{split}/{sample}.{split}.R1.fq.gz", sample=SAMPLES if config["if_cuttag"] else [],split=SPLIT if config ["if_cuttag"] else []),
-        expand("processed/{sample}/{split}/{sample}.{split}.R2_5.bed.gz", sample=SAMPLES if config["if_cuttag"] else [],split=SPLIT if config ["if_cuttag"] else []),
-        #expand("stat/{split}.read.stat",split=SPLIT if config ["if_cuttag"] else []),
-        #expand("stat/{split}.frag.stat",split=SPLIT if config ["if_cuttag"] else []),
-        expand("result/fragments/{split}.fragments.bgz",split=SPLIT if config ["if_cuttag"] else [])
-#        expand("result/radialPos/{res}/{sample}.rp.{res}.{rep}.color", sample=SAMPLES if config["if_structure"] else [],
-#            res=["20k","50k","200k","1m"] if config["if_structure"] else [],
-#            rep=list(range(5)) if config["if_structure"] else []),
+        expand("processed/{sample}/{split}/{sample}.{split}.R1.fq.gz", sample=SAMPLES if config["if_charm"] else [],split=SPLIT if config ["if_charm"] else []),
+        expand("processed/{sample}/{split}/{sample}.{split}.R2_5.bed.gz", sample=SAMPLES if config["if_charm"] else [],split=SPLIT if config ["if_charm"] else []),
+        expand("result/fragments/{split}.fragments.bgz",split=SPLIT if config ["if_charm"] else [])
+
     threads: config["resources"]["generateStat_cpu_threads"] 
     shell:"""
 	echo "done!"

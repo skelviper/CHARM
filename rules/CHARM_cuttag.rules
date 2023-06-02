@@ -5,7 +5,6 @@ rule R2_mapping:
     output:
         R2sortbam = "processed/{sample}/{split}/{sample}.R2.sort.bam"
     threads:  config["resources"]["bwa_cpu_threads"],
-    conda:"../envs/main_env.yaml",
     shell:"""
 
         bwa-mem2 mem -5SP -t {threads} {input.ref_genome} {input.R2} | samtools sort -@{threads} -o {output.R2sortbam} -
@@ -19,13 +18,15 @@ rule bam2bed:
         snp_file = config["refs"][config["ref_genome"]]["snp"],
     output:
         R2_bed = "processed/{sample}/{split}/{sample}.{split}.R2_5.bed.gz"
-    conda:"../envs/main_env.yaml",
     threads: 4
     shell:"""
 
         samtools view {input.R2sortbam} | xargs -I {{}} printf '{{}}\n%.0s' {{1..2}} | \
         {input.hickit}/hickit.js sam2seg -d 0 -v {input.snp_file} - | \
-        cut -f 2 | awk '{{FS="!";OFS="\t"}}{{print $1,$2,$3,$5,$6,$4}}' | gzip > {output.R2_bed}
+        cut -f 2 > processed/{wildcards.sample}/{wildcards.split}/{wildcards.sample}.{wildcards.split}.R2_5.bed
+        awk '{{FS="!";OFS="\t"}}{{print $1,$2,$3,$5,$6,$4}}' processed/{wildcards.sample}/{wildcards.split}/{wildcards.sample}.{wildcards.split}.R2_5.bed | \
+        gzip > {output.R2_bed}
+        rm -rf processed/{wildcards.sample}/{wildcards.split}/{wildcards.sample}.{wildcards.split}.R2_5.bed
 
     """
 
@@ -35,19 +36,10 @@ rule generate_dedup_fragments:
     output:
         fragments = "processed/{split}_all/{sample}.{split}.frag.bed.gz",
     log: "processed/{split}_all/{sample}.{split}.frag.log",
-    #conda:"../envs/main_env.yaml",
     shell:"""
-        set +u
-        source ~/miniconda3/etc/profile.d/conda.sh
-        conda activate hic2
-        set -u
         
         python ./CHARM/CHARM_scripts/dedup_bed.py -i {input.R2_bed} -o {output.fragments} -t normal > {log} > {log}
 
-        set +u
-        conda deactivate
-        set -u
-        
     """
 
 rule foramt_fragmenets:
@@ -55,9 +47,10 @@ rule foramt_fragmenets:
         fragments = rules.generate_dedup_fragments.output.fragments,
     output:
         format_fragments = "processed/{split}_all/{sample}.{split}.format_frag.bed.gz"
-    conda:"../envs/main_env.yaml",
     shell:"""
+
         zcat {input.fragments} | cut -f 1-3 | awk '{{OFS="\t"}}{{print $0"\t{wildcards.sample}\t1"}}' | gzip > {output.format_fragments}
+        
     """
 
 rule combine_fragments:
@@ -65,8 +58,9 @@ rule combine_fragments:
         fragments = expand("processed/{{split}}_all/{sample}.{{split}}.format_frag.bed.gz", sample=SAMPLES),
     output:
         fragments = "result/fragments/{split}.fragments.bgz",
-    conda:"../envs/main_env.yaml",
     threads: 10
     shell:"""
+
         zcat {input.fragments} | sort -k1,1 -k2,2n | uniq |  bgzip -@ 5 > {output.fragments}
+
     """

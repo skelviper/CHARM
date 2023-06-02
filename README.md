@@ -8,5 +8,7 @@ Single cell **C**hromatin structure\\**H**istone modification\\**A**ccessibility
 ## Build enviroment for CHARM
 
 ```
+# run this for the first time 
 mamba create -n charm -c conda-forge -c bioconda python=3.8 snakemake=5.20.1 
+mamba env update -n charm --file main_env.yaml 
 ```
