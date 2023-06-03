@@ -42,8 +42,8 @@ rule all:
 
     threads: config["resources"]["generateStat_cpu_threads"] 
     shell:"""
-	echo "done!"
-#        ./CHARM/CHARM_scripts/generateStat.sh
+        ./CHARM/CHARM_scripts/generateStat.sh
+        echo "done!"
     """
 
     

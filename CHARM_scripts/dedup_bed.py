@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    atac_bed = pd.read_csv(args.input,sep="\t",header=None)
+    atac_bed = pd.read_csv(args.input,sep="\t",header=None,skiprows=1)
     atac_bed.columns = ["chrom","start","end","readID","score","strand"]
     # we use 5' end of R2 for dedup
     atac_bed = atac_bed.assign(pos = np.where(atac_bed['strand'] == '+', atac_bed['start'], atac_bed['end']-1)).sort_values(['chrom','pos'])

@@ -1,6 +1,6 @@
 #!/bin/bash
 source ~/miniconda3/etc/profile.d/conda.sh
-conda activate py3
+conda activate charm
 
 mkdir ./stat
 
@@ -14,11 +14,11 @@ find ./result/cleaned_pairs/c12 -name "*.pairs.gz" | parallel --tag 'zcat {} | g
 find ./result/cleaned_pairs/c123 -name "*.pairs.gz" | parallel --tag 'zcat {} | grep -v "^#" |wc -l' | sort > ./stat/pairs.c123.stat
 for i in `find ./result/cleaned_pairs/c123 -name "*.pairs.gz" |sort`; do echo -n $i;echo -n -e "\t";zcat $i| grep -v "^#" | awk '$2!=$4 {print $0}' | wc -l; done > ./stat/inter.pairs.c123.stat
 
-for i in `find ./result/cleaned_pairs/c12 -name "*.pairs.gz" |sort`; do echo -n $i;echo -n -e "\t";zcat $i| grep -v "^#" | awk '$2!=$4 {print $0}' | wc -l; done > ./stat/inter.pairs.c12.stat
+for i in `find ./result/cleaned_pairs/c123 -name "*.pairs.gz" |sort`; do echo -n $i;echo -n -e "\t";zcat $i| grep -v "^#" | awk '$2!=$4 {print $0}' | wc -l; done > ./stat/inter.pairs.c123.stat
 
 find processed/ -name "*rms.info" | xargs -I {} grep --with-filename "top3 RMS RMSD" {} | sed -e "s/processed\///g" -e "s/\/3d_info\/50k.align.rms.info:\[M::__main__\] top3 RMS RMSD: /\t/g" | sort > ./stat/rmsd.info
 
-find processed -name "*.yperx.txt" | parallel 'paste <(echo {}) <(cat {})'| sort > ./stat/yperx.sta
+find processed -name "*.yperx.txt" | parallel 'paste <(echo {}) <(cat {})'| sort > ./stat/yperx.stat
 
 ls Rawdata | parallel "echo -n '{},'; samtools flagstat processed/{}/atac/{}.R2.sort.bam | head -n 1 | sed -e 's/ /\t/g' | cut -f 1" | sort > stat/atac.read.stat
 ls Rawdata | parallel "echo -n '{},'; samtools flagstat processed/{}/ct/{}.R2.sort.bam | head -n 1 | sed -e 's/ /\t/g' | cut -f 1" | sort > stat/ct.read.stat
