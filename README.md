@@ -9,6 +9,6 @@ Single cell **C**hromatin structure\\**H**istone modification\\**A**ccessibility
 
 ```
 # run this for the first time 
-mamba create -n charm -c conda-forge -c bioconda python=3.8 snakemake=5.20.1 
-mamba env update -n charm --file main_env.yaml 
+mamba create -n charm -c conda-forge -c bioconda python=3.7.16 snakemake=5.20.1 
+mamba env update -n charm --file charm.yaml 
 ```
