@@ -29,6 +29,8 @@ rule align2pairs:
         contacts_seg = "processed/{sample}/2d_info/contacts.seg.gz",
     params:
         yperx_threshold = config["yperx_threshold"],
+        if_snp = config["if_snp"],
+        if_ht = config["if_ht"],
     log:
         contacts_seg_log = "processed/{sample}/2d_info/contacts.seg.log",
         raw_pairs_log = "processed/{sample}/2d_info/raw.pairs.log",
@@ -42,16 +44,28 @@ rule align2pairs:
     shell: """
         # decide sex
         yperx=`awk 'BEGIN{{printf "%.6f",('$(samtools view -q 30 {input.bam} chrY |wc -l)'/'$(samtools view -q 30 {input.bam} chrX | wc -l)')}}'`
-        echo $yperx > {log.yperx} 
+        echo $yperx > {log.yperx}
+        if_snp={params.if_snp}
+        if_ht={params.if_ht}
 
-        if [ $yperx \> {params.yperx_threshold} ]
+        if [ $if_snp == "True" ]
         then
-        samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg  -v {input.snp_file} - 2> {log.contacts_seg_log} |\
-         {input.hickit}/hickit.js chronly - | {input.hickit}/hickit.js bedflt {input.par_file} - | sed 's/-/+/g' | gzip > {output.contacts_seg}
+            if [ $yperx \> {params.yperx_threshold} ]
+            then
+                samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg  -v {input.snp_file} - 2> {log.contacts_seg_log} |\
+                {input.hickit}/hickit.js chronly - | {input.hickit}/hickit.js bedflt {input.par_file} - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
+            else
+                samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg -v {input.snp_file} - 2> {log.contacts_seg_log} | {input.hickit}/hickit.js chronly -y - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
+            fi
         else
-        samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg -v {input.snp_file} - 2> {log.contacts_seg_log} | {input.hickit}/hickit.js chronly -y - | sed 's/-/+/g' | gzip > {output.contacts_seg}
+            if [ $yperx \> {params.yperx_threshold} ]
+            then
+                samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg  - 2> {log.contacts_seg_log} |\
+                {input.hickit}/hickit.js chronly - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
+            else
+                samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg - 2> {log.contacts_seg_log} | {input.hickit}/hickit.js chronly -y - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
+            fi
         fi
-
     """
 
 rule seg2pairs:
@@ -61,16 +75,23 @@ rule seg2pairs:
     output:
         raw_pairs = "processed/{sample}/2d_info/raw.pairs.gz",
         contacts_pairs = "processed/{sample}/2d_info/contacts.pairs.gz",
+    params:
+        if_ht = config["if_ht"],
     log:
         raw_pairs_log = "processed/{sample}/2d_info/raw.pairs.log",
         contacts_pairs_log = "processed/{sample}/2d_info/contacts.pairs.log",
 
     shell:"""
-
+        if_ht={params.if_ht}
         #generate raw.pairs.gz for statistics
         {input.hickit}/hickit --dup-dist=0 -i {input.contacts_seg} -o - 2> {log.raw_pairs_log} | gzip > {output.raw_pairs}
-        #generate real pairs
-        {input.hickit}/hickit --dup-dist=500 -i {input.contacts_seg} -o - 2> {log.contacts_pairs_log} | gzip > {output.contacts_pairs}
+        #generate deduped pairs
+        if [ $if_ht == "False" ]
+        then
+            {input.hickit}/hickit --dup-dist=500 -i {input.contacts_seg} -o - 2> {log.contacts_pairs_log} | gzip > {output.contacts_pairs}
+        else
+            {input.hickit}/hickit --dup-dist=1 -i {input.contacts_seg} -o - 2> {log.contacts_pairs_log} | gzip > {output.contacts_pairs}
+        fi
 
     """
 

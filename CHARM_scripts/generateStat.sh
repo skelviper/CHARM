@@ -5,7 +5,7 @@ conda activate charm
 mkdir ./stat
 
 find ./ -name "raw.pairs.gz" | parallel --tag 'zcat {} |grep -v "^#"| wc -l' | sort > ./stat/raw.pairs.stat
-find -L ./Rawdata/ -name "*R1*.gz" | parallel --tag 'zcat {} | wc -l' | sort > ./stat/raw.fq.stat
+find -L ./Rawdata/ -name "*_1.fq.gz" | parallel --tag 'zcat {} | wc -l' | sort > ./stat/raw.fq.stat
 find ./processed -name "*.rna.clean.R1.fq.gz" | parallel --tag 'zcat {} | wc -l' | sort > ./stat/rna.fq.stat
 find ./processed -name "*.dna.R1.fq.gz" | parallel --tag 'zcat {} | wc -l' | sort > ./stat/dna.fq.stat
 find ./processed -name "contacts.pairs.gz" | parallel --tag 'zcat {} | grep -v "^#" |wc -l' | sort > ./stat/pairs.dedup.stat

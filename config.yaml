@@ -1,5 +1,6 @@
-if_snp: True
-if_structure: True
+if_snp: False
+if_ht: False
+if_structure: False
 if_RNA_snp_split: False
 if_charm: True 
 
