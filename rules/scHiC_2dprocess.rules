@@ -118,15 +118,16 @@ rule cleanPairs:
         nodes = config["resources"]["hires_clean_cpu_threads"],
     params:
         ref_annotation = config["refs"][config["ref_genome"]]["annotations"],
-
+        ref_genome = config["ref_genome"],
     shell:"""
         mkdir -p result/cleaned_pairs/c1
         mkdir -p result/cleaned_pairs/c12
         mkdir -p result/cleaned_pairs/c123
-        
+
         python {input.charmtools} clean_leg -t {threads} {input.contacts_pairs} -o {output.clean1_pairs}
         python {input.charmtools} clean_isolated -t {threads} -o {output.clean12_pairs} {output.clean1_pairs}
         python {input.charmtools} clean_splicing {output.clean12_pairs} -r {params.ref_annotation} -o {output.clean123_pairs} -t {threads}
+
 
     """
 

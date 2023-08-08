@@ -7,7 +7,7 @@ if_charm: False
 ref_genome: GRCm38  # GRCm38 or GRCh37d5
 yperx_threshold: 0.015 # GM12878 is all female,set a bigger value
 softwares:
-  CHARMtools: /share/home/zliu/shareb/zliu/analysis/hires_gastrulation/CHARMtools
+  CHARMtools: /share/home/zliu/shareb/zliu/analysis/CHARMtools
   HICKIT: /share/home/zliu/biosoft/hickit-0.1.1_x64-linux/
 refs:
   GRCm38:
