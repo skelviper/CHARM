@@ -36,6 +36,13 @@ refs:
       50k: /share/home/zliu/biosoft/hires_utils/hires_utils/reference/hg19CpG/GRCh37d5.CpG.50000.txt
       200k: /share/home/zliu/biosoft/hires_utils/hires_utils/reference/hg19CpG/GRCh37d5.CpG.200000.txt
       1m: /share/home/zliu/biosoft/hires_utils/hires_utils/reference/hg19CpG/GRCh37d5.CpG.1000000.txt
+  rab:
+    bwa_mem2_index: /share/Data/public/ref_genome/rabbit_ref/bwamem2/GCF_009806435.1_UM_NZW_1.0_genomic.fna
+    star_index: /share/Data/public/ref_genome/rabbit_ref/star_index
+    annotations: /share/Data/public/ref_genome/rabbit_ref/rawdata/genomic.gtf
+    snp: /share/Data/public/ref_genome/GRCh37/snp_file/GM12878/NA12878.withchr.txt
+    par: /share/Data/public/ref_genome/GRCh37/snp_file/GM12878/NA12878.withchr.txt
+    RNAsnp: /share/Data/public/ref_genome/GRCh37/snp_file/GM12878/NA12878.withchr.txt
 split:
   ct: XGGTTGAGGTAGTGGTATAGCTTCGTGTATAAGAGACAG;o=32
   atac: XGGTTGAGGTAGTAAGTCCTGGATGTGTATAAGAGACAG;o=32

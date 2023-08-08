@@ -31,6 +31,7 @@ rule align2pairs:
         yperx_threshold = config["yperx_threshold"],
         if_snp = config["if_snp"],
         if_ht = config["if_ht"],
+        ref_genome = config["ref_genome"],
     log:
         contacts_seg_log = "processed/{sample}/2d_info/contacts.seg.log",
         raw_pairs_log = "processed/{sample}/2d_info/raw.pairs.log",
@@ -43,27 +44,34 @@ rule align2pairs:
 
     shell: """
         # decide sex
-        yperx=`awk 'BEGIN{{printf "%.6f",('$(samtools view -q 30 {input.bam} chrY |wc -l)'/'$(samtools view -q 30 {input.bam} chrX | wc -l)')}}'`
-        echo $yperx > {log.yperx}
+        ref_genome={params.ref_genome}
         if_snp={params.if_snp}
         if_ht={params.if_ht}
-
-        if [ $if_snp == "True" ]
+        if [ $ref_genome == "rab" ] 
         then
-            if [ $yperx \> {params.yperx_threshold} ]
-            then
-                samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg  -v {input.snp_file} - 2> {log.contacts_seg_log} |\
-                {input.hickit}/hickit.js chronly - | {input.hickit}/hickit.js bedflt {input.par_file} - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
-            else
-                samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg -v {input.snp_file} - 2> {log.contacts_seg_log} | {input.hickit}/hickit.js chronly -y - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
-            fi
+            samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg - 2> {log.contacts_seg_log} |\
+                {input.hickit}/hickit.js chronly -r NC_06* - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
         else
-            if [ $yperx \> {params.yperx_threshold} ]
+            yperx=`awk 'BEGIN{{printf "%.6f",('$(samtools view -q 30 {input.bam} chrY |wc -l)'/'$(samtools view -q 30 {input.bam} chrX | wc -l)')}}'`
+            echo $yperx > {log.yperx}
+
+            if [ $if_snp == "True" ]
             then
-                samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg  - 2> {log.contacts_seg_log} |\
-                {input.hickit}/hickit.js chronly - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
+                if [ $yperx \> {params.yperx_threshold} ]
+                then
+                    samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg  -v {input.snp_file} - 2> {log.contacts_seg_log} |\
+                    {input.hickit}/hickit.js chronly - | {input.hickit}/hickit.js bedflt {input.par_file} - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
+                else
+                    samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg -v {input.snp_file} - 2> {log.contacts_seg_log} | {input.hickit}/hickit.js chronly -y - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
+                fi
             else
-                samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg - 2> {log.contacts_seg_log} | {input.hickit}/hickit.js chronly -y - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
+                if [ $yperx \> {params.yperx_threshold} ]
+                then
+                    samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg  - 2> {log.contacts_seg_log} |\
+                    {input.hickit}/hickit.js chronly - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
+                else
+                    samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg - 2> {log.contacts_seg_log} | {input.hickit}/hickit.js chronly -y - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
+                fi
             fi
         fi
     """
@@ -112,7 +120,10 @@ rule cleanPairs:
         ref_annotation = config["refs"][config["ref_genome"]]["annotations"],
 
     shell:"""
-
+        mkdir -p result/cleaned_pairs/c1
+        mkdir -p result/cleaned_pairs/c12
+        mkdir -p result/cleaned_pairs/c123
+        
         python {input.charmtools} clean_leg -t {threads} {input.contacts_pairs} -o {output.clean1_pairs}
         python {input.charmtools} clean_isolated -t {threads} -o {output.clean12_pairs} {output.clean1_pairs}
         python {input.charmtools} clean_splicing {output.clean12_pairs} -r {params.ref_annotation} -o {output.clean123_pairs} -t {threads}

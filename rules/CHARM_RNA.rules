@@ -104,15 +104,20 @@ rule count:
         CountMatrix = "result/RNA_Res/counts.{type}.{genome}.tsv",
     params:
         countParams = r"--per-gene --per-cell --gene-tag=XT --wide-format-cell-counts --assigned-status-tag=XS",
+        ref_genome = config["ref_genome"],
     threads: config["resources"]["count_cpu_threads"]
     resources:
         nodes = config["resources"]["count_cpu_threads"]
     shell:"""
         
         mkdir -p ./processed/RNA_all/feature_{wildcards.type}_{wildcards.genome}/
-        
-        featureCounts -a {input.geneAnnotations} -o ./processed/RNA_all/feature_{wildcards.type}_{wildcards.genome}/gene_assigned -R BAM {input.bamIn} -T {threads} -Q 30 -t {wildcards.type} -g gene_name -O -s 1 
-
+        ref_genome={params.ref_genome}
+        if [ $ref_genome == "rab" ]
+        then
+            featureCounts -a {input.geneAnnotations} -o ./processed/RNA_all/feature_{wildcards.type}_{wildcards.genome}/gene_assigned -R BAM {input.bamIn} -T {threads} -Q 30 -t {wildcards.type} -g gene_id -O -s 1 
+        else
+            featureCounts -a {input.geneAnnotations} -o ./processed/RNA_all/feature_{wildcards.type}_{wildcards.genome}/gene_assigned -R BAM {input.bamIn} -T {threads} -Q 30 -t {wildcards.type} -g gene_name -O -s 1 
+        fi
         #OUTPUT countMatix by gene
         samtools sort ./processed/RNA_all/feature_{wildcards.type}_{wildcards.genome}/star.Aligned.sortedByCoord.out.{wildcards.genome}.bam.featureCounts.bam -o ./processed/RNA_all/feature_{wildcards.type}_{wildcards.genome}/samsort.bam
         samtools index ./processed/RNA_all/feature_{wildcards.type}_{wildcards.genome}/samsort.bam
