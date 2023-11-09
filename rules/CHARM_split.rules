@@ -17,8 +17,8 @@ rule multiSplit:
 
 rule split:
     input:
-        "Rawdata/{sample}/{sample}_1.fq.gz",
-        "Rawdata/{sample}/{sample}_2.fq.gz"
+        "Rawdata/{sample}/{sample}_R1.fq.gz",
+        "Rawdata/{sample}/{sample}_R2.fq.gz"
         #"Rawdata/{sample}_R1.fq.gz",
         #"Rawdata/{sample}_R2.fq.gz",
     output: 
@@ -33,6 +33,15 @@ rule split:
         adapter=r"XGGTTGAGGTAGTATTGCGCAATG;o=20"
     shell:"""
 
+        # For BGI 
+        # cutadapt -G '{params.adapter}' -j {threads} --untrimmed-output {output.DNA_R1}.tmp --untrimmed-paired-output {output.DNA_R2}.tmp -o {output.RNA_R1}.tmp -p {output.RNA_R2}.tmp {input} && \
+        # awk '{{if(NR%4==1) gsub("/1"," 1",$1); print $0}}' {output.RNA_R1}.tmp | gzip > {output.RNA_R1} && \
+        # awk '{{if(NR%4==1) gsub("/2"," 2",$1); print $0}}' {output.RNA_R2}.tmp | gzip > {output.RNA_R2} && \
+        # awk '{{if(NR%4==1) gsub("/1"," 1",$1); print $0}}' {output.DNA_R1}.tmp | gzip > {output.DNA_R1} && \
+        # awk '{{if(NR%4==1) gsub("/2"," 2",$1); print $0}}' {output.DNA_R2}.tmp | gzip > {output.DNA_R2} && \
+        # rm {output.RNA_R1}.tmp {output.RNA_R2}.tmp {output.DNA_R1}.tmp {output.DNA_R2}.tmp
+
+        # For illumina
         cutadapt -G '{params.adapter}' -j {threads} --untrimmed-output {output.DNA_R1} --untrimmed-paired-output {output.DNA_R2} -o {output.RNA_R1} -p {output.RNA_R2} {input} 
 
         """
