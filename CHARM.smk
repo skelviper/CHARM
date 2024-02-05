@@ -28,7 +28,7 @@ rule all:
         expand("result/RNA_Res/counts.{type}.{genome}.format.tsv",type=["gene","exon"],genome=["total","genome1","genome2"] if config["if_RNA_snp_split"] else ["total"]),
         #Hi-C part pairs info
         expand("processed/{sample}/2d_info/contacts.pairs.gz",sample=SAMPLES),
-        #expand("result/cleaned_pairs/c12/{sample}.pairs.gz",sample=SAMPLES)
+        expand("result/cleaned_pairs/c12/{sample}.pairs.gz",sample=SAMPLES),
         expand("result/dip_pairs/{sample}.dip.pairs.gz",sample=SAMPLES if config["if_snp"] else []),
         #Hi-C part 3d info
         expand("processed/{sample}/3d_info/{sample}.{res}.align.rms.info",sample=SAMPLES if config["if_structure"] else [],res=["20k","50k","200k","1m"] if config["if_structure"] else []),
