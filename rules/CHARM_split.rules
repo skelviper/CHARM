@@ -22,10 +22,10 @@ rule split:
         #"Rawdata/{sample}_R1.fq.gz",
         #"Rawdata/{sample}_R2.fq.gz",
     output: 
-        DNA_R1="processed/{sample}/DNA/{sample}.dna.R1.fq.gz",
-        DNA_R2="processed/{sample}/DNA/{sample}.dna.R2.fq.gz",
-        RNA_R1="processed/{sample}/RNA/{sample}.rna.R1.fq.gz",
-        RNA_R2="processed/{sample}/RNA/{sample}.rna.R2.fq.gz",
+        DNA_R1=temp("processed/{sample}/DNA/{sample}.dna.R1.fq.gz"),
+        DNA_R2=temp("processed/{sample}/DNA/{sample}.dna.R2.fq.gz"),
+        RNA_R1=temp("processed/{sample}/RNA/{sample}.rna.R1.fq.gz"),
+        RNA_R2=temp("processed/{sample}/RNA/{sample}.rna.R2.fq.gz"),
     threads: config["resources"]["cutadapt_cpu_threads"]
     resources:
         nodes = config["resources"]["cutadapt_cpu_threads"]
@@ -46,8 +46,27 @@ rule split:
 
         """
 
+# get rid of the ATAC/CT adaptors in the DNA data
+rule cutRound2_DNA:
+    input:
+        DNA_R1="processed/{sample}/DNA/{sample}.dna.R1.fq.gz",
+        DNA_R2="processed/{sample}/DNA/{sample}.dna.R2.fq.gz",
+    output:
+        trimmed_DNA_R1="processed/{sample}/DNA/{sample}.dna.clean.R1.fq.gz",
+        trimmed_DNA_R2="processed/{sample}/DNA/{sample}.dna.clean.R2.fq.gz",
+    threads: config["resources"]["cutadapt_cpu_threads"]
+    resources:
+        nodes = config["resources"]["cutadapt_cpu_threads"]
+    params:
+        adapters=lambda wildcards: " ".join([f"-G '{config['split'][key]}'" for key in config["split"]])
+    shell:"""
+
+        cutadapt {params.adapters} -j {threads} -o {output.trimmed_DNA_R1} -p {output.trimmed_DNA_R2} {input.DNA_R1} {input.DNA_R2}
+
+        """
+
 #cutRound2 is for minimize genome contamination in RNA data, probably from exonuclease activity of reverse transcriptase
-rule cutRound2:
+rule cutRound2_RNA:
     input:
         RNA_R1="processed/{sample}/RNA/{sample}.rna.R1.fq.gz",
         RNA_R2="processed/{sample}/RNA/{sample}.rna.R2.fq.gz"

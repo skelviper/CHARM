@@ -1,8 +1,8 @@
 rule bwa_map:
     input:
         ref_genome=config["refs"][config["ref_genome"]]["bwa_mem2_index"],
-        DNA1="processed/{sample}/DNA/{sample}.dna.R1.fq.gz",
-        DNA2 = "processed/{sample}/DNA/{sample}.dna.R2.fq.gz",
+        DNA1="processed/{sample}/DNA/{sample}.dna.clean.R1.fq.gz",
+        DNA2="processed/{sample}/DNA/{sample}.dna.clean.R2.fq.gz",
     output:
         bam = "processed/{sample}/mapping/{sample}.sort.bam",
         bamidx = "processed/{sample}/mapping/{sample}.sort.bam.bai"
