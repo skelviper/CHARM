@@ -1,6 +1,6 @@
 if_snp: True
 if_ht: False
-if_structure: True
+if_structure: False
 if_RNA_snp_split: False
 if_charm: True
 
@@ -12,7 +12,7 @@ softwares:
 refs:
   GRCm38:
     bwa_mem2_index: /share/Data/public/ref_genome/mouse_ref/M23/bwamem2/genome.fa
-    star_index: /share/home/zliu/share/Data/public/ref_genome/mouse_ref/M23/RNA_snp_split/CAST_B6_star_index
+    star_index: /share/Data/public/ref_genome/mouse_ref/M23/RNA_snp_split/CAST_B6_star_index
     annotations: /share/Data/public/ref_genome/mouse_ref/M23/raw_data/annotation.gtf
     snp: /share/home/zliu/share/Data/public/ref_genome/GRCm38/snp/Tan.CAST_B6.snp.GRCm38.withchr.txt
     par: /share/home/zliu/share/Data/public/ref_genome/GRCm38/raw_data/par.bed
