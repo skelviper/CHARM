@@ -7,19 +7,19 @@ import tqdm
 import warnings
 warnings.filterwarnings("ignore")
 
-def DBSCAN_wrapper(column,eps=20):
+def DBSCAN_wrapper(column,eps):
     try:
-        return DBSCAN(eps=20, min_samples=1).fit(column.values.reshape(-1, 1)).labels_
+        return DBSCAN(eps=eps, min_samples=1).fit(column.values.reshape(-1, 1)).labels_
     except:
         pass
 
-def dedup_bed(rawbed:pd.DataFrame) -> pd.DataFrame:
+def dedup_bed(rawbed:pd.DataFrame,eps) -> pd.DataFrame:
     """
     dedup pairs by DBSCAN clustering
     """
     raw_bed_num = rawbed.shape[0]
     # try chr1 or chrom1
-    rawbed["cluster"] = rawbed.groupby("chrom")["pos"].transform(DBSCAN_wrapper)
+    rawbed["cluster"] = rawbed.groupby("chrom")["pos"].transform(DBSCAN_wrapper,eps=eps)
 
     rawbed = rawbed.groupby(["chrom","cluster"]).head(n=1)
     rawbed = rawbed.drop(["cluster","pos"], axis=1)
@@ -32,17 +32,17 @@ def dedup_bed(rawbed:pd.DataFrame) -> pd.DataFrame:
 
     return rawbed, rate
 
-def dedup_wrapper(bed,type="normal"):
+def dedup_wrapper(bed,eps,type="normal"):
     #type in ["normal","spilitpool"]
     if type == "normal":
-        bed,rate = dedup_bed(bed)
+        bed,rate = dedup_bed(bed,eps)
         print("Duplication rate is %.2f%%" % rate)
     elif type == "splitpool":
         total = bed.shape[0]
         # split dataframe to list of dataframe by column cell
         bed_list = [group[1] for group in bed.groupby("cell")]
         # dedup each dataframe
-        dedup_bed_list = [dedup_bed(bed)[0] for bed in tqdm.tqdm(bed_list)]
+        dedup_bed_list = [dedup_bed(bed,eps)[0] for bed in tqdm.tqdm(bed_list)]
         # combine dataframe
         bed = pd.concat(dedup_bed_list)
         bed = bed.reset_index(drop=True)
@@ -59,12 +59,12 @@ if __name__ == "__main__":
     parser.add_argument("-o","--output", help="output bed file", required=True)
     parser.add_argument("-t","--type", help="dedup type", default="normal", choices=["normal","splitpool"])
 
-    parser.add_argument("-e","--eps",help="eps for DBSCAN", default=30, type=int)
-    parser.add_argument("-q","--mapq",help="threshold for mapping quality", default=30, type=int)
+    parser.add_argument("-e","--eps",help="eps for DBSCAN", default=1, type=int)
+    parser.add_argument("-q","--mapq",help="threshold for mapping quality", default=0, type=int)
 
     args = parser.parse_args()
 
-    atac_bed = pd.read_csv(args.input,sep="\t",header=None,skiprows=1)
+    atac_bed = pd.read_csv(args.input,sep="\t",header=None)
     atac_bed.columns = ["chrom","start","end","readID","score","strand"]
     # we use 5' end of R2 for dedup
     atac_bed = atac_bed.assign(pos = np.where(atac_bed['strand'] == '+', atac_bed['start'], atac_bed['end']-1)).sort_values(['chrom','pos'])
@@ -76,7 +76,8 @@ if __name__ == "__main__":
         atac_bed = atac_bed = atac_bed.query('cell != "unmatched"')
         print("Demultiplexed ATAC reads: " + str(atac_bed.shape[0]))
 
-    dedup_atac_bed = dedup_wrapper(atac_bed,type  = args.type)
+    eps = args.eps
+    dedup_atac_bed = dedup_wrapper(atac_bed,eps,type  = args.type)
     dedup_atac_bed = dedup_atac_bed.query('score > @args.mapq')
     print("Deduped ATAC reads after filtering: " + str(dedup_atac_bed.shape[0]))
 
