@@ -4,12 +4,10 @@ rule R2_mapping:
         R1 = rules.multiSplit.output.split_R1,
         R2 = rules.multiSplit.output.split_R2,
     output:
-        #R2sortbam = "processed/{sample}/{split}/{sample}.R2.sort.bam"
         sortbam = "processed/{sample}/{split}/{sample}.sort.bam"
     threads:  config["resources"]["bwa_cpu_threads"],
     shell:"""
 
-        #bwa-mem2 mem -5SP -t {threads} {input.ref_genome} {input.R2} | samtools sort -@{threads} -o {output.R2sortbam} -
         bwa-mem2 mem -5SP -t {threads} {input.ref_genome} {input.R1} {input.R2} | samtools sort -@{threads} -o {output.sortbam} -   
 
     """
