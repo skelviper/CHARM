@@ -10,7 +10,7 @@
 import os
 
 #input
-SAMPLES = [i.split(sep='_')[0] for i in os.listdir("./Rawdata")][:10]
+SAMPLES = [i.split(sep='_')[0] for i in os.listdir("./Rawdata")]
 SPLIT = ["atac","ct"]
 
 configfile: "CHARM/config.yaml"

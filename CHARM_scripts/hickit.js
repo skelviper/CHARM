@@ -286,10 +286,6 @@ function _hic_resolve_frag(opt, a)
 			else last[2] = q[7];
 			last[5] = last[5] > q[8]? last[5] : q[8];
 			++last[6];
-			// modified by zliu
-			if (!last[7].includes(q[10])) {
-				last[7] += ',' + q[10];
-			}
 		}
 	}
 	if (segs.length < 2) return;
