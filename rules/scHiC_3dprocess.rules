@@ -1,7 +1,6 @@
 rule hickit_3d:
     input:
         impute_pairs = rules.hickit_2d.output.impute_pairs,
-        hickit = config["softwares"]["HICKIT"],
     output:
         tdg_1m = "processed/{sample}/3d_info/1m.{rep}.3dg",
         tdg_200k = "processed/{sample}/3d_info/200k.{rep}.3dg",
@@ -11,7 +10,7 @@ rule hickit_3d:
         nodes = 1
     shell: """
 
-        {input.hickit}/hickit -s{wildcards.rep} -M \
+        CHARM/CHARM_scripts/hickit -s{wildcards.rep} -M \
             -i {input.impute_pairs} -Sr1m -c1 -r10m -c2 \
             -b4m -b1m -O {output.tdg_1m} \
             -b200k -O {output.tdg_200k} \

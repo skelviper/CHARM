@@ -21,7 +21,6 @@ rule bwa_map:
 
 rule align2pairs:
     input:
-        hickit = config["softwares"]["HICKIT"],
         snp_file = config["refs"][config["ref_genome"]]["snp"],
         par_file = config["refs"][config["ref_genome"]]["par"],
         bam = rules.bwa_map.output.bam,
@@ -49,8 +48,8 @@ rule align2pairs:
         if_ht={params.if_ht}
         if [ $ref_genome == "rab" ] 
         then
-            samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg - 2> {log.contacts_seg_log} |\
-                {input.hickit}/hickit.js chronly -r NC_06* - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
+            samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | CHARM/CHARM_scripts/hickit.js sam2seg - 2> {log.contacts_seg_log} |\
+                CHARM/CHARM_scripts/hickit.js chronly -r NC_06* - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
         else
             yperx=`awk 'BEGIN{{printf "%.6f",('$(samtools view -q 30 {input.bam} chrY |wc -l)'/'$(samtools view -q 30 {input.bam} chrX | wc -l)')}}'`
             echo $yperx > {log.yperx}
@@ -59,18 +58,18 @@ rule align2pairs:
             then
                 if [ $yperx \> {params.yperx_threshold} ]
                 then
-                    samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg  -v {input.snp_file} - 2> {log.contacts_seg_log} |\
-                    {input.hickit}/hickit.js chronly - | {input.hickit}/hickit.js bedflt {input.par_file} - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
+                    samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | CHARM/CHARM_scripts/hickit.js sam2seg  -v {input.snp_file} - 2> {log.contacts_seg_log} |\
+                    CHARM/CHARM_scripts/hickit.js chronly - | CHARM/CHARM_scripts/hickit.js bedflt {input.par_file} - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
                 else
-                    samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg -v {input.snp_file} - 2> {log.contacts_seg_log} | {input.hickit}/hickit.js chronly -y - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
+                    samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | CHARM/CHARM_scripts/hickit.js sam2seg -v {input.snp_file} - 2> {log.contacts_seg_log} | CHARM/CHARM_scripts/hickit.js chronly -y - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
                 fi
             else
                 if [ $yperx \> {params.yperx_threshold} ]
                 then
-                    samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg  - 2> {log.contacts_seg_log} |\
-                    {input.hickit}/hickit.js chronly - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
+                    samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | CHARM/CHARM_scripts/hickit.js sam2seg  - 2> {log.contacts_seg_log} |\
+                    CHARM/CHARM_scripts/hickit.js chronly - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
                 else
-                    samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | {input.hickit}/hickit.js sam2seg - 2> {log.contacts_seg_log} | {input.hickit}/hickit.js chronly -y - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
+                    samtools view -h {input.bam} | samtools sort -n -@10 | samtools view -h | CHARM/CHARM_scripts/hickit.js sam2seg - 2> {log.contacts_seg_log} | CHARM/CHARM_scripts/hickit.js chronly -y - | (if [ $if_ht == "False" ]; then sed 's/-/+/g'; else cat; fi) | gzip > {output.contacts_seg}
                 fi
             fi
         fi
@@ -78,7 +77,6 @@ rule align2pairs:
 
 rule seg2pairs:
     input:
-        hickit = config["softwares"]["HICKIT"],
         contacts_seg = rules.align2pairs.output.contacts_seg,
     output:
         raw_pairs = "processed/{sample}/2d_info/raw.pairs.gz",
@@ -92,13 +90,13 @@ rule seg2pairs:
     shell:"""
         if_ht={params.if_ht}
         #generate raw.pairs.gz for statistics
-        {input.hickit}/hickit --dup-dist=0 -i {input.contacts_seg} -o - 2> {log.raw_pairs_log} | gzip > {output.raw_pairs}
+        CHARM/CHARM_scripts/hickit --dup-dist=0 -i {input.contacts_seg} -o - 2> {log.raw_pairs_log} | gzip > {output.raw_pairs}
         #generate deduped pairs
         if [ $if_ht == "False" ]
         then
-            {input.hickit}/hickit --dup-dist=500 -i {input.contacts_seg} -o - 2> {log.contacts_pairs_log} | gzip > {output.contacts_pairs}
+            CHARM/CHARM_scripts/hickit --dup-dist=500 -i {input.contacts_seg} -o - 2> {log.contacts_pairs_log} | gzip > {output.contacts_pairs}
         else
-            {input.hickit}/hickit --dup-dist=1 -i {input.contacts_seg} -o - 2> {log.contacts_pairs_log} | gzip > {output.contacts_pairs}
+            CHARM/CHARM_scripts/hickit --dup-dist=1 -i {input.contacts_seg} -o - 2> {log.contacts_pairs_log} | gzip > {output.contacts_pairs}
         fi
 
     """
@@ -107,7 +105,6 @@ rule seg2pairs:
 rule cleanPairs:
     input: 
         charmtools = config["softwares"]["CHARMtools"],
-        hickit = config["softwares"]["HICKIT"],
         contacts_pairs = rules.seg2pairs.output.contacts_pairs,
     output: 
         clean1_pairs= "result/cleaned_pairs/c1/{sample}.pairs.gz",
@@ -134,7 +131,6 @@ rule cleanPairs:
 
 rule hickit_2d:
     input:
-        hickit = config["softwares"]["HICKIT"],
         cleaned_pairs = rules.cleanPairs.output.clean123_pairs,
     output:
         impute_pairs = "result/impute/pairs/{sample}.impute.pairs.gz",
@@ -148,9 +144,9 @@ rule hickit_2d:
     shell:"""
 
         #impute phases
-        {input.hickit}/hickit -i {input.cleaned_pairs} -u -o - 2> {log.impute_pairs_log} | bgzip > {output.impute_pairs}
+        CHARM/CHARM_scripts/hickit -i {input.cleaned_pairs} -u -o - 2> {log.impute_pairs_log} | bgzip > {output.impute_pairs}
         # estimate imputation accuracy by holdout
-        {input.hickit}/hickit -i {input.cleaned_pairs} --out-val={output.impute_val} 2> {log.impute_val_log}
+        CHARM/CHARM_scripts/hickit -i {input.cleaned_pairs} --out-val={output.impute_val} 2> {log.impute_val_log}
 
         """
 
