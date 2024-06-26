@@ -7,7 +7,7 @@ mkdir ./stat
 find ./ -name "raw.pairs.gz" | parallel --tag 'zcat {} |grep -v "^#"| wc -l' | sort > ./stat/raw.pairs.stat
 find -L ./Rawdata/ -name "*1.fq.gz" | parallel --tag 'zcat {} | wc -l' | sort > ./stat/raw.fq.stat
 find ./processed -name "*.rna.clean.R1.fq.gz" | parallel --tag 'zcat {} | wc -l' | sort > ./stat/rna.fq.stat
-find ./processed -name "*.dna.R1.fq.gz" | parallel --tag 'zcat {} | wc -l' | sort > ./stat/dna.fq.stat
+find ./processed -name "*.dna.clean.R1.fq.gz" | parallel --tag 'zcat {} | wc -l' | sort > ./stat/dna.fq.stat
 find ./processed -name "contacts.pairs.gz" | parallel --tag 'zcat {} | grep -v "^#" |wc -l' | sort > ./stat/pairs.dedup.stat
 find ./result/cleaned_pairs/c1 -name "*.pairs.gz" | parallel --tag 'zcat {} |grep -v "^#" | wc -l' | sort > ./stat/pairs.c1.stat
 find ./result/cleaned_pairs/c12 -name "*.pairs.gz" | parallel --tag 'zcat {} | grep -v "^#" |wc -l' | sort > ./stat/pairs.c12.stat
@@ -20,5 +20,5 @@ find processed/ -name "*rms.info" | xargs -I {} grep --with-filename "top3 RMS R
 
 find processed -name "*.yperx.txt" | parallel 'paste <(echo {}) <(cat {})'| sort > ./stat/yperx.stat
 
-ls Rawdata | parallel "echo -n '{},'; samtools flagstat processed/{}/atac/{}.R2.sort.bam | head -n 1 | sed -e 's/ /\t/g' | cut -f 1" | sort > stat/atac.read.stat
-ls Rawdata | parallel "echo -n '{},'; samtools flagstat processed/{}/ct/{}.R2.sort.bam | head -n 1 | sed -e 's/ /\t/g' | cut -f 1" | sort > stat/ct.read.stat
+ls Rawdata | parallel "echo -n '{},'; samtools flagstat processed/{}/atac/{}.sort.bam | head -n 1 | sed -e 's/ /\t/g' | cut -f 1" | sort > stat/atac.read.stat
+ls Rawdata | parallel "echo -n '{},'; samtools flagstat processed/{}/ct/{}.sort.bam | head -n 1 | sed -e 's/ /\t/g' | cut -f 1" | sort > stat/ct.read.stat

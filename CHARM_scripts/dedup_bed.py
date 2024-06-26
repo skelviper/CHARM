@@ -59,7 +59,7 @@ if __name__ == "__main__":
     parser.add_argument("-o","--output", help="output bed file", required=True)
     parser.add_argument("-t","--type", help="dedup type", default="normal", choices=["normal","splitpool"])
 
-    parser.add_argument("-e","--eps",help="eps for DBSCAN", default=1, type=int)
+    parser.add_argument("-e","--eps",help="eps for DBSCAN", default=10, type=int)
     parser.add_argument("-q","--mapq",help="threshold for mapping quality", default=0, type=int)
 
     args = parser.parse_args()
