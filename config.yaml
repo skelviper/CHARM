@@ -1,7 +1,7 @@
 if_snp: True
 if_ht: False
 if_structure: False
-if_RNA_snp_split: False
+if_RNA_snp_split: True
 if_charm: True
 
 ref_genome: GRCm38  
