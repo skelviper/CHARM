@@ -6,16 +6,16 @@ rule bwa_map:
     output:
         bam = "processed/{sample}/mapping/{sample}.sort.bam",
         bamidx = "processed/{sample}/mapping/{sample}.sort.bam.bai"
-    threads: config["resources"]["bwa_cpu_threads"],
+    threads: 10
     resources:
-        nodes = config["resources"]["bwa_cpu_threads"],
+        nodes = 10
     params:
         extra=r"-R '@RG\tID:{sample}\tPL:ILLUMINA\tSM:{sample}'",
 
     shell:"""
 
-        bwa-mem2 mem -5SP -t{threads} {params.extra} {input.ref_genome} {input.DNA1} {input.DNA2} | samtools sort -@{threads} -o {output.bam} -
-        samtools index -@{threads} {output.bam} {output.bamidx}
+        bwa-mem2 mem -5SP -t7 {params.extra} {input.ref_genome} {input.DNA1} {input.DNA2} | samtools sort -@3 -o {output.bam} -
+        samtools index -@7 {output.bam} {output.bamidx}
 
         """
 
