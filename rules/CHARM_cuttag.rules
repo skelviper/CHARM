@@ -58,5 +58,6 @@ rule combine_fragments:
     shell:"""
 
         zcat {input.fragments} | sort -k1,1 -k2,2n | uniq |  bgzip -@ 5 > {output.fragments}
+        tabix -p bed {output.fragments}
 
     """

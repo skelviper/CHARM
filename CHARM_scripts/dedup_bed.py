@@ -59,8 +59,9 @@ if __name__ == "__main__":
     parser.add_argument("-o","--output", help="output bed file", required=True)
     parser.add_argument("-t","--type", help="dedup type", default="normal", choices=["normal","splitpool"])
 
-    parser.add_argument("-e","--eps",help="eps for DBSCAN", default=10, type=int)
+    parser.add_argument("-e","--eps",help="eps for DBSCAN", default=1, type=int)
     parser.add_argument("-q","--mapq",help="threshold for mapping quality", default=0, type=int)
+    parser.add_argument("--R2_3end",help="dedup R2 3' end", default=True, type=bool)
 
     args = parser.parse_args()
 
@@ -77,7 +78,10 @@ if __name__ == "__main__":
         print("Demultiplexed ATAC reads: " + str(atac_bed.shape[0]))
 
     eps = args.eps
-    dedup_atac_bed = dedup_wrapper(atac_bed,eps,type  = args.type)
+    dedup_atac_bed = dedup_wrapper(atac_bed,eps,type = args.type)
+    if args.R2_3end:
+        dedup_atac_bed = dedup_atac_bed.assign(pos = np.where(dedup_atac_bed['strand'] == '-', dedup_atac_bed['start'], dedup_atac_bed['end']-1)).sort_values(['chrom','pos'])
+        dedup_atac_bed = dedup_wrapper(dedup_atac_bed,eps,type = args.type)
     dedup_atac_bed = dedup_atac_bed.query('score > @args.mapq')
     print("Deduped ATAC reads after filtering: " + str(dedup_atac_bed.shape[0]))
 
