@@ -1,0 +1,63 @@
+rule R2_mapping:
+    input:
+        ref_genome=config["refs"][config["ref_genome"]]["bwa_mem2_index"],
+        R1 = rules.multiSplit.output.split_R1,
+        R2 = rules.multiSplit.output.split_R2,
+    output:
+        sortbam = "processed/{sample}/{split}/{sample}.sort.bam"
+    threads:  10
+    shell:"""
+
+        bwa-mem2 mem -5SP -t7 {input.ref_genome} {input.R1} {input.R2} | samtools sort -@3 -o {output.sortbam} -   
+
+    """
+
+rule bam2bed:
+    input:
+        sortbam = rules.R2_mapping.output.sortbam,
+        snp_file = config["refs"][config["ref_genome"]]["snp"],
+    output:
+        R2_bed = "processed/{sample}/{split}/{sample}.{split}.R2_5.bed.gz",
+    threads: 4
+    shell:"""
+
+        samtools view -h {input.sortbam} | samtools sort -n -@4 | samtools view - | CHARM/CHARM_scripts/hickit.js sam2seg -d 0 -v {input.snp_file} - | \
+            python CHARM/CHARM_scripts/seg2bed.py - - | gzip > {output.R2_bed}
+
+    """
+
+rule generate_dedup_fragments:
+    input:
+        R2_bed = rules.bam2bed.output.R2_bed,
+    output:
+        fragments = "processed/{split}_all/{sample}.{split}.frag.bed.gz",
+    log: "processed/{split}_all/{sample}.{split}.frag.log",
+    shell:"""
+        
+        python ./CHARM/CHARM_scripts/dedup_bed.py -i {input.R2_bed} -o {output.fragments} -t normal > {log} > {log}
+
+    """
+
+rule foramt_fragmenets:
+    input:
+        fragments = rules.generate_dedup_fragments.output.fragments,
+    output:
+        format_fragments = "processed/{split}_all/{sample}.{split}.format_frag.bed.gz"
+    shell:"""
+
+        zcat {input.fragments} | cut -f 1-3 | awk '{{OFS="\t"}}{{print $0"\t{wildcards.sample}\t1"}}' | gzip > {output.format_fragments}
+        
+    """
+
+rule combine_fragments:
+    input:
+        fragments = expand("processed/{{split}}_all/{sample}.{{split}}.format_frag.bed.gz", sample=SAMPLES),
+    output:
+        fragments = "result/fragments/{split}.fragments.bgz",
+    threads: 10
+    shell:"""
+
+        zcat {input.fragments} | sort -k1,1 -k2,2n | uniq |  bgzip -@ 5 > {output.fragments}
+        tabix -p bed {output.fragments}
+
+    """
