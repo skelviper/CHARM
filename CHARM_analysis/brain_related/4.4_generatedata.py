@@ -17,7 +17,7 @@ import pickle
 
 sys.path.append('/shareb/zliu/analysis/')
 sys.path.append('/shareb/zliu/analysis/CHARMtools')
-from CHARMtools import Cell3Ddev as Cell3D
+from upload.CHARMtools.archieve import Cell3Ddev as Cell3D
 from CHARMtools import MultiCell3D
 
 metadata = pd.read_csv("./brain.metadata.tsv", sep="\t",header=None)

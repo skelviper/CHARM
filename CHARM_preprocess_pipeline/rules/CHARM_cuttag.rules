@@ -21,8 +21,8 @@ rule bam2bed:
     threads: 4
     shell:"""
 
-        samtools view -h {input.sortbam} | samtools sort -n -@4 | samtools view - | CHARM/CHARM_scripts/hickit.js sam2seg -d 0 -v {input.snp_file} - | \
-            python CHARM/CHARM_scripts/seg2bed.py - - | gzip > {output.R2_bed}
+        samtools view -h {input.sortbam} | samtools sort -n -@4 | samtools view - | CHARM_preprocess_pipeline/CHARM_scripts/hickit.js sam2seg -d 0 -v {input.snp_file} - | \
+        python CHARM_preprocess_pipeline/CHARM_scripts/seg2bed.py - - | gzip > {output.R2_bed}
 
     """
 
@@ -34,7 +34,7 @@ rule generate_dedup_fragments:
     log: "processed/{split}_all/{sample}.{split}.frag.log",
     shell:"""
         
-        python ./CHARM/CHARM_scripts/dedup_bed.py -i {input.R2_bed} -o {output.fragments} -t normal > {log} > {log}
+        python ./CHARM_preprocess_pipeline/CHARM_scripts/dedup_bed.py -i {input.R2_bed} -o {output.fragments} -t normal > {log} > {log}
 
     """
 

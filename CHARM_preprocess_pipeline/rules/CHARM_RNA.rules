@@ -133,6 +133,6 @@ rule convertCountFormat:
         convertedCountMatrix = "result/RNA_Res/counts.{type}.{genome}.format.tsv",
     shell:"""
         
-        Rscript CHARM/CHARM_scripts/fraction.R {input.countMatrix} {output.convertedCountMatrix}
+        Rscript CHARM_preprocess_pipeline/CHARM_scripts/fraction.R {input.countMatrix} {output.convertedCountMatrix}
         
     """

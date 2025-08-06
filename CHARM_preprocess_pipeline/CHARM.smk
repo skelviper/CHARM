@@ -13,7 +13,7 @@ import os
 SAMPLES = [i.split(sep='_')[0] for i in os.listdir("./Rawdata")]
 SPLIT = ["atac","ct"]
 
-configfile: "CHARM/config.yaml"
+configfile: "CHARM_preprocess_pipeline/config.yaml"
 
 #############RULE_ALL###############
 """
@@ -43,7 +43,7 @@ rule all:
 
     threads: config["resources"]["generateStat_cpu_threads"] 
     shell:"""
-        ./CHARM/CHARM_scripts/generateStat.sh
+        ./CHARM_preprocess_pipeline/CHARM_scripts/generateStat.sh
         echo "done!"
     """
 

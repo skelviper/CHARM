@@ -10,7 +10,7 @@ rule hickit_3d:
         nodes = 1
     shell: """
 
-        CHARM/CHARM_scripts/hickit -s{wildcards.rep} -M \
+        CHARM_preprocess_pipeline/CHARM_scripts/hickit -s{wildcards.rep} -M \
             -i {input.impute_pairs} -Sr1m -c1 -r10m -c2 \
             -b4m -b1m -O {output.tdg_1m} \
             -b200k -O {output.tdg_200k} \
@@ -49,7 +49,7 @@ rule hickit_align3D:
 
     shell:"""
         
-        python ./CHARM/CHARM_scripts/hires3dAligner.py processed/{wildcards.sample}/3d_info/clean.{wildcards.res}.[0-4].3dg 2> {output.rmsInfo} > /dev/null
+        python ./CHARM_preprocess_pipeline/CHARM_scripts/hires3dAligner.py processed/{wildcards.sample}/3d_info/clean.{wildcards.res}.[0-4].3dg 2> {output.rmsInfo} > /dev/null
         
         """
 
